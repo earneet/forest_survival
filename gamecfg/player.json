@@ -1,0 +1,13 @@
+
+{
+  "speed_walk": 5,
+  "speed_run": 8,
+  "speed_swim": 3,
+  "run": {
+    "allow_terrain": ["*"],
+    "limit_terrain": ["forest"]
+  },
+  "swim": {
+    "allow_terrain": ["river"]
+  }
+}

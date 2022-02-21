@@ -1,0 +1,15 @@
+
+{
+  "animals": {
+    "sheep": 2,
+    "chick": 2,
+    "cattle": 2
+  },
+
+  "plants": {
+  },
+
+  "npc": {
+    "npc": 2
+  }
+}

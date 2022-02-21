@@ -1,0 +1,18 @@
+
+{
+  "spring": {
+    "temperature": 25
+  },
+
+  "summer": {
+    "temperature": 30
+  },
+
+  "autumn": {
+    "temperature": 18
+  },
+
+  "winter": {
+    "temperature": 10
+  }
+}
