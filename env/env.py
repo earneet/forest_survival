@@ -13,6 +13,14 @@ class Season(Enum):
     WINTER = 4
 
 
+SeasonTemperatures = {
+    Season.SPRING: 25,
+    Season.SUMMER: 30,
+    Season.AUTUMN: 18,
+    Season.WINTER: 10
+}
+
+
 class Direction(Enum):
     NORTH = 1
     EAST = 2
@@ -34,7 +42,8 @@ def get_vec_by_direction(_dir):
 
 
 class Env:
-    FRAME_INTERVAL = 10
+    STEP_FRAME_INTERVAL = 10
+    STEP_BREAK = 1 / STEP_FRAME_INTERVAL
     HOUR_SECOND_RATIO = 24  # * 60 * 60
     DAY_HOUR_RATIO = 24
     MONTH_DAY_RATIO = 30
@@ -52,6 +61,10 @@ class Env:
         self.plants = []
         self.frames = 0
         self.map = None
+        self.message = []
+
+    def get_global_temperature(self):
+        return SeasonTemperatures[self.season]
 
     def reset(self):
         self.engine.reset()
@@ -62,7 +75,7 @@ class Env:
     def step(self, actions):
         assert actions is not None, "actions Can't be None"
         frames = 0
-        while frames < self.FRAME_INTERVAL:
+        while frames < self.STEP_FRAME_INTERVAL:
             self.logic.update()
             if self.render:
                 self.engine.update()

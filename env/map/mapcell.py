@@ -35,11 +35,25 @@ class MapLogicRiver(MapLogicBase):
         return False
 
     def on_player_move_in(self, player):
-        if player.state == PlayerState.MOVING:
+        if player.state == PlayerState.MOVING and player.sub_state != MoveType.SWIMMING:
+            player.sub_state_stack.append(player.sub_state)
             player.sub_state = MoveType.SWIMMING
 
     def on_player_move_out(self, player):
-        pass
+        player.sub_state = player.sub_state_stack.pop()
+
+
+class MapLogicForest(MapLogicBase):
+    def __init__(self, cell):
+        super().__init__(cell)
+
+    def on_player_move_in(self, player):
+        if player.state == PlayerState.MOVING and player.sub_state == MoveType.RUNNING:
+            player.sub_state_stack.append(player.sub_state)
+            player.sub_state = MoveType.WALKING
+
+    def on_player_move_out(self, player):
+        player.sub_state = player.sub_state_stack.pop()
 
 
 class MapLogicHouse(MapLogicBase):
@@ -50,9 +64,17 @@ class MapLogicHouse(MapLogicBase):
 Terrain2Logic = {
     Terrain.SELF_HOUSE: MapLogicHouse,
     Terrain.HOUSE: MapLogicHouse,
-    Terrain.FOREST: MapLogicCommon,
+    Terrain.FOREST: MapLogicForest,
     Terrain.LAWN: MapLogicCommon,
     Terrain.RIVER: MapLogicRiver
+}
+
+TerrainTemperature = {
+    Terrain.SELF_HOUSE: 0,
+    Terrain.HOUSE: 0,
+    Terrain.FOREST: 0,
+    Terrain.LAWN: 0,
+    Terrain.RIVER:0
 }
 
 
@@ -72,8 +94,14 @@ class MapCell:
     def player_move_out(self, player):
         return self._logic.on_player_move_out(player)
 
+    def get_temperature_delta(self):
+        return TerrainTemperature[self.type]
+
     def player_move_in(self, player):
         if player in self.players:
             return
         self.players.append(player)
         self._logic.on_player_move_in(player)
+
+    def is_empty(self):
+        return not (self.plants or self.animals or self.players)

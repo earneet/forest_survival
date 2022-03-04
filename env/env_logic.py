@@ -4,6 +4,10 @@ import os
 from queue import Queue
 from typing import Dict, Callable
 
+import numpy as np
+
+from animals import new_animal
+from map.terrain import string2terrains
 from player import Player
 from timer import FixedPeriodTimer
 
@@ -106,14 +110,26 @@ class EnvLogic:
         self._refresh_animals()
 
     def _refresh_animals(self):
-        residuals = {'sheep': 0, 'cattle': 0, 'chick': 0}
         from animals import animal_cfg
+        residuals = {}
+        for species, cfg in animal_cfg.items():
+            residuals[species] = 0
+
         for animal in self._env.animals:
             if animal.hp > 0:
-                residuals[animal.species] = residuals[animal.species] + 1 if animal.species in residuals else 1
+                residuals[animal.species] += 1
 
-        for species, cfg in animal_cfg:
-            residual = residuals[species] if species in residuals else 0
+        for species, cfg in animal_cfg.items():
+            need_cnt = cfg.init_count - residuals[species]
+            cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
+            self._refresh_species(species, cfg, cells)
+
+    def _refresh_species(self, species, cfg, cells):
+        for cell in cells:
+            sp = new_animal(species, cfg)
+            pos_x, pos_y = self._env.map.get_cell_center(cell)
+            sp.position = np.array([pos_x, pos_y])
+            self._env.animals.append(sp)
 
     def _refresh_init_plants(self):
         self._env.plants = []

@@ -7,3 +7,11 @@ class Terrain(Enum):
     FOREST = 3
     RIVER = 4
     LAWN = 5
+
+
+def string2terrains(terrains):
+    if isinstance(terrains, str):
+        terrains = terrains.split(',')
+    assert isinstance(terrains, list)
+    return [Terrain[t.strip().upper()] for t in terrains]
+

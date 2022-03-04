@@ -1,4 +1,5 @@
 from . import GameItem
+import pygame
 
 
 class Engine:
@@ -10,6 +11,9 @@ class Engine:
         pass
 
     def reset(self):
+        pass
+
+    def quit(self):
         pass
 
     def spawn(self, game_item: GameItem, parent: GameItem = None):
