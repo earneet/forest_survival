@@ -1,10 +1,12 @@
 
 {
   "sheep": {
+    "species": "sheep",
     "init_count": 3,
     "terrains": ["lawn"],
     "attribute": {
       "hp": 20,
+      "attack": 5,
       "speed": 1,
       "cost": 0
     },
@@ -21,10 +23,12 @@
   },
 
   "cattle": {
+    "species": "cattle",
     "init_count": 3,
     "terrains": ["lawn"],
     "attribute": {
-      "hp": 20,
+      "hp": 30,
+      "attack": 10,
       "speed": 1,
       "cost": 0
     },
@@ -35,17 +39,19 @@
 
     },
     "drop": {
-      "wool": 5,
-      "meat": 2
+      "meat": [5, 8],
+      "horn": 0.3
     }
   },
 
   "chick": {
+    "species": "chick",
     "init_count": 3,
     "terrains": ["lawn"],
     "attribute": {
-      "hp": 20,
-      "speed": 1,
+      "hp": 5,
+      "attack": 0,
+      "speed": 5,
       "cost": 0
     },
     "strategy": {
@@ -55,8 +61,28 @@
 
     },
     "drop": {
-      "wool": 5,
-      "meat": 2
+      "meat": [1, 2]
+    }
+  },
+
+  "fish": {
+    "species": "fish",
+    "init_count": 20,
+    "terrains": ["river"],
+    "attribute": {
+      "hp": 5,
+      "attack": 0,
+      "speed": 2,
+      "cost": 0
+    },
+    "strategy": {
+
+    },
+    "rule": {
+
+    },
+    "drop": {
+      "meat": 1
     }
   }
 }

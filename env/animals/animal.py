@@ -1,6 +1,5 @@
 import abc
 from enum import Enum
-from typing import Dict
 
 from env.engine.gameitem import GameItem
 
@@ -11,16 +10,22 @@ class AnimalState(Enum):
 
 
 class Animal(GameItem, abc.ABC):
-    def __init__(self, cfg, logic=None):
+    def __init__(self, cfg):
         super().__init__()
-        self.hp = 1
         self.cfg = cfg
-        self.move_speed = 1
-        self.resource = {}
+        self.hp = int(cfg.attribute.hp)
+        self.move_speed = int(cfg.attribute.speed)
         self.ai_instance = None
-        self._species = 'sheep'
+        self._species = cfg.species
+        self._logic = None
         self.state = AnimalState.IDLE
-        self._logic = logic
+        self.killer = None
+        self.attack_frame = 0                       # attack settlement frame
+        self.damage_table = {}
+        self.events = []
+
+    def get_name(self):
+        return self._species + "_" + self.id
 
     def update(self):
         if self._logic:
@@ -29,8 +34,12 @@ class Animal(GameItem, abc.ABC):
         if self.ai_instance:
             self.ai_instance.update()
 
-    def species(self) -> str:
-        raise NotImplementedError
+    def drop(self):
+        return self._logic.drop()
 
-    def drop_items(self) -> Dict[int, int]:
-        raise NotImplementedError
+    def species(self) -> str:
+        return self._species
+
+    def damage_by(self, attacker, damage):
+        real_damage = self._logic.damage_by(attacker, damage)
+        return real_damage

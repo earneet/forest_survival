@@ -70,7 +70,12 @@ class PlayerBattleLogic:
         last_settlement = player.attack_frame
         if last_settlement + env.frames == env.STEP_FRAME_INTERVAL:  # settlement battle per second
             player.attack_frame = env.frames
-            target = env.get_player(player.interact_target)
+            target = None
+            if env.is_player(player.interact_target):
+                target = env.get_player(player.interact_target)
+            elif env.is_animal(player.interact_target):
+                target = env.get_animal(player.interact_target)
+
             assert target is not None, f"player {player.id} battle with None "
             if not target.is_dead() and target.can_damage_by(player):
                 damage = self._compute_attack()
@@ -83,10 +88,11 @@ class PlayerBattleLogic:
     def damage_by(self, attacker, damage):
         player = self.player
         if player.hp <= 0:
-            return
+            return 0
         real_damage = self._compute_damage(damage)
         player.hp -= real_damage
-        player.killer = attacker
+        if player.hp <= 0:
+            player.killer = attacker
         return real_damage
 
     def _compute_attack(self, player=None):
@@ -118,6 +124,8 @@ class PlayerLogic:
     def update(self):
         logging.debug(f"player {self.player.id} update using default player update ... ")
         player = self.player
+        if player.hp <= 0:
+            return self.dead_update()
         env = player.env
         state, sub_state = player.state, player.sub_state
         from player import PlayerState
@@ -136,9 +144,16 @@ class PlayerLogic:
 
         self._process_natural_energy_cost(state, sub_state)
         self._process_natural_hunger_cost(state, sub_state)
+        self._process_natural_recover()
+
+        self.player.hp = min(self.player.hp, self.player.hp_max)    # 如果hp有溢出，则在最后的逻辑中移除溢出
+
         if player.ai_logic:
             player.ai_logic.update()
         self._process_new_event()
+
+    def dead_update(self):
+        pass
 
     def get_fells_temperature(self):
         return self.player.env.get_global_temperature() + self.get_delta_temperature()
@@ -166,6 +181,14 @@ class PlayerLogic:
 
     def _process_new_event(self):
         pass
+
+    def _process_natural_recover(self):
+        hunger = self.player.hunger
+        energy = self.player.energy
+        temperature = self.player.get_fells_temperature()
+        hp = self.player.hp
+        if hunger > 80 and energy > 80 and (18 <= temperature <= 30) and hp > 0:
+            self.player.hp += 5 * self.player.env.STEP_BREAK
 
     def _process_natural_energy_cost(self, state, sub_state):
         env = self.player.env

@@ -84,8 +84,25 @@ class Env:
         assert self is not None
         return ""
 
-    def get_player(self, id):
+    def is_player(self, pid) -> bool:
         for p in self.players:
-            if p.id == id:
+            if p.id == pid:
+                return True
+        return False
+
+    def is_animal(self, aid) -> bool:
+        for a in self.animals:
+            if a.id == aid:
+                return True
+        return False
+
+    def get_animal(self, aid):
+        for a in self.animals:
+            if a.id == aid:
+                return a
+
+    def get_player(self, pid):
+        for p in self.players:
+            if p.id == pid:
                 return p
 

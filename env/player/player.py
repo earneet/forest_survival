@@ -77,7 +77,7 @@ class Player(GameItem):
         self.active_message = []
         self.passive_message = []
 
-    def get_player_name(self):
+    def get_name(self):
         return "player_" + str(self.id)
 
     def update(self):
@@ -96,7 +96,7 @@ class Player(GameItem):
     def damage_by(self, attacker, damage):
         real_damage = self._logic.damage_by(attacker, damage)
         if self.passive_message is not None:
-            self.passive_message.append(f'{self.get_player_name()} attacked by {attacker.get_player_name()} '
+            self.passive_message.append(f'{self.get_name()} attacked by {attacker.get_name()} '
                                         f'damage {real_damage} {"dead" if self.is_dead() else ""}')
         return real_damage
 

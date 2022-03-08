@@ -1,4 +1,35 @@
 
 {
+  "branch_plant": {
+    "init_count": 5,
+    "drop": {
+      "stick_equip": 1,
+    },
 
+    "terrains": ["forest"]
+  },
+
+  "apple_plant": {
+    "init_count": 5,
+    "drop": {
+      "apple": 1
+    },
+    "terrains": ["forest"]
+  },
+
+  "herb_plant": {
+    "init_count": 2,
+    "drop": {
+      "herb": 1
+    },
+    "terrains": ["lawn"]
+  },
+
+  "cotton_plant": {
+    "init_count": 2,
+    "drop": {
+      "cotton": 3
+    },
+    "terrains": ["forest"]
+  }
 }

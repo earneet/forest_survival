@@ -4,9 +4,14 @@ from env.engine.gameitem import GameItem
 
 
 class Plant(GameItem, abc.ABC):
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
         self.collectors = {}
+        self.cfg = cfg
+        self._species = cfg.species
+
+    def species(self) -> str:
+        return self._species
 
     def collect(self, player, frame):
         self.collectors[player.id] = frame

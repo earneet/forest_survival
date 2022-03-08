@@ -1,0 +1,59 @@
+
+{
+  "cotton_clothes": {
+    "wear": 50,
+    "recipe": {
+      "materials": {
+        "cotton": 3,
+        "wool": 3,
+        "gown": 1
+      },
+      "time_consuming": 1.0
+    },
+
+    "effect": {
+      "temperature": 5
+    }
+  },
+
+  "gown_clothes": {
+    "wear": 50,
+    "recipe": {
+      "materials": {
+        "cotton": 5
+      },
+      "time_consuming": 0.5
+    },
+
+    "effect": {
+      "temperature": 2
+    }
+  },
+
+  "t_shirt_clothes": {
+    "wear": 50,
+    "recipe": {
+      "materials": {
+        "cotton": 3
+      },
+      "time_consuming": 0.5
+    },
+
+    "effect": {
+      "temperature": -2
+    }
+  },
+
+  "vest_clothes": {
+    "wear": 50,
+    "recipe": {
+      "materials": {
+        "cotton": 2
+      },
+      "time_consuming": 0.5
+    },
+    "effect": {
+      "temperature": -5
+    }
+  }
+}

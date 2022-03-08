@@ -122,17 +122,38 @@ class EnvLogic:
         for species, cfg in animal_cfg.items():
             need_cnt = cfg.init_count - residuals[species]
             cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
-            self._refresh_species(species, cfg, cells)
+            self._refresh_animals_species(species, cfg, cells)
 
-    def _refresh_species(self, species, cfg, cells):
+    def _refresh_init_plants(self):
+        self._env.plants = []
+        from plants import plant_cfg
+        residuals = {}
+        for species, cfg in plant_cfg.items():
+            residuals[species] = 0
+
+        for plant in self._env.plants:
+            residuals[plant.species] += 1
+
+        for species, cfg in plant_cfg.items():
+            need_cnt = cfg.init_count - residuals[species]
+            cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
+            self._refresh_plants_species(species, cfg, cells)
+
+    def _refresh_animals_species(self, species, cfg, cells):
         for cell in cells:
             sp = new_animal(species, cfg)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
             self._env.animals.append(sp)
 
-    def _refresh_init_plants(self):
-        self._env.plants = []
+    def _refresh_plants_species(self, species, cfg, cells):
+        for cell in cells:
+            sp = new_plant(species, cfg)
+            pos_x, pos_y = self._env.map.get_cell_center(cell)
+            sp.position = np.array([pos_x, pos_y])
+            self._env.animals.append(sp)
+
+
 
     def on_new_day(self, new_day):
         logging.info(" a new day begin ... middle night")
