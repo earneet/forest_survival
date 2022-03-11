@@ -1,12 +1,11 @@
 import enum
-from enum import Enum
-from typing import Dict
+from enum import Enum, IntEnum
+from typing import Dict, List, Tuple
 
 from env.engine.gameitem import GameItem
 import itertools
 import numpy as np
 
-from player import PlayerLogic
 
 player_id = itertools.count()
 next(player_id)
@@ -22,19 +21,19 @@ class PlayerState(Enum):
 
 
 @enum.unique
-class MoveType(Enum):
+class MoveType(IntEnum):
     WALKING = 0
     RUNNING = 1
     SWIMMING = 2
 
 
-class SlotType(Enum):
+class SlotType(IntEnum):
     EQUIP = 0
     CLOTH = 1
 
 
 @enum.unique
-class DirectionEnum(Enum):
+class DirectionEnum(IntEnum):
     INVALID = 0
     UP = 1
     RIGHT = 2
@@ -51,6 +50,7 @@ class Player(GameItem):
         super().__init__()
         self.id = next(player_id)
         self.env = env
+        from player import PlayerLogic
         self._logic = PlayerLogic(self)
         self.action = None
         self.events = []
@@ -60,8 +60,8 @@ class Player(GameItem):
         self.sub_state_stack = []           # used by mapcell logic, for resume pre sub_state when leave current cell
         self.interact_target = 0
         self.friend_ship: Dict[int, int] = {}       # npc id 2 friendship value
-        self.handy_items: Dict[int, int] = {}       # items id 2 count, slot max size is 5
-        self.home_items: Dict[int, int] = {}        # items id 2 count , slot max size is 50
+        self.handy_items: List[Tuple[object, int]] = [(None, 0) for _ in range(5)] # items id 2 count, slot max size is 5
+        self.home_items: List[Tuple[object, int]] = [(None, 0) for _ in range(5)] # items id 2 count , slot max size is 50
         self.equips = [None, None]                  # equip slots, two slot, one for weapon, one for clothes
         self.energy = 100
         self.hp_max = 100
@@ -104,5 +104,20 @@ class Player(GameItem):
         if hasattr(self._logic, "on_new_day"):
             self._logic.on_new_day()
 
-    def equip(self, item_id, slot=SlotType.EQUIP):
-        self._logic.equip(item_id, slot)
+    def equip(self, handy_idx, slot=SlotType.EQUIP):
+        self._logic.equip(handy_idx, slot)
+
+    def use(self, handy_idx):
+        self._logic.use(handy_idx)
+
+    def make(self, item):
+        self._logic.make(item)
+
+    def pickup(self, items):
+        pass
+
+    def trim_handy(self):
+        pass
+
+    def trim_house(self):
+        pass

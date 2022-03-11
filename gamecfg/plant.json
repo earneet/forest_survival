@@ -3,7 +3,7 @@
   "branch_plant": {
     "init_count": 5,
     "drop": {
-      "stick_equip": 1,
+      "stick_equip": 1
     },
 
     "terrains": ["forest"]

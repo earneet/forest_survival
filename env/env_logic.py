@@ -55,6 +55,13 @@ class EnvLogic:
         for animal in self._env.animals:
             animal.update(frames)
 
+        for plant in self._env.plants:
+            plant.update(frames)
+
+        self._env.players = [p for p in self._env.players if p.hp > 0]
+        self._env.animals = [p for p in self._env.animals if p.hp > 0]
+        self._env.plants = [p for p in self._env.plants if p.hp > 0]
+
         self._update_timer(frames)
 
     def _update_timer(self, frames):
@@ -70,7 +77,7 @@ class EnvLogic:
         if day_change:
             month, month_change = day // 30, day % 30 == 0
             if month_change:
-                logging.info(" a new month begin ... ")
+                # logging.info(" a new month begin ... ")
                 season, season_change = month // 3, month % 3 == 0
                 if season_change:
                     self.on_season_change(season)
@@ -84,7 +91,6 @@ class EnvLogic:
 
     def _add_default_timers(self):
         timers = []
-
         timer = self._env.timer
         timer.add_timer(FixedPeriodTimer(1.0, EnvLogic.EVENT_SECOND_ELAPSE))
 
@@ -120,12 +126,15 @@ class EnvLogic:
                 residuals[animal.species] += 1
 
         for species, cfg in animal_cfg.items():
-            need_cnt = cfg.init_count - residuals[species]
-            cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
+            need_cnt = cfg["init_count"] - residuals[species]
+            cells = self._env.map.select_cells(string2terrains(cfg["terrains"]), size=need_cnt)
             self._refresh_animals_species(species, cfg, cells)
 
     def _refresh_init_plants(self):
         self._env.plants = []
+        self._refresh_plants()
+
+    def _refresh_plants(self):
         from plants import plant_cfg
         residuals = {}
         for species, cfg in plant_cfg.items():
@@ -137,7 +146,7 @@ class EnvLogic:
         for species, cfg in plant_cfg.items():
             need_cnt = cfg.init_count - residuals[species]
             cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
-            self._refresh_plants_species(species, cfg, cells)
+            self._refresh_plants_species(species, cells)
 
     def _refresh_animals_species(self, species, cfg, cells):
         for cell in cells:
@@ -146,36 +155,42 @@ class EnvLogic:
             sp.position = np.array([pos_x, pos_y])
             self._env.animals.append(sp)
 
-    def _refresh_plants_species(self, species, cfg, cells):
+    def _refresh_plants_species(self, species, cells):
+        from plants import new_plant
         for cell in cells:
-            sp = new_plant(species, cfg)
+            sp = new_plant(species)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
-            self._env.animals.append(sp)
-
-
+            self._env.plants.append(sp)
 
     def on_new_day(self, new_day):
-        logging.info(" a new day begin ... middle night")
         for player in self._env.players:
             player.on_new_day()
-        # refresh day reset
+        self._refresh_animals()
+        self._refresh_plants()
 
     def on_sun_raise(self, day):
-        logging.info(f"day event sun raise ... day {day}")
+        msg = f"day event sun raise ... day {day}"
+        logging.debug(msg)
+        self._env.message.append(msg)
 
     def on_noon(self, day):
-        logging.info(f"day event the noon ... day {day}")
+        msg = f"day event the noon ... day {day}"
+        logging.debug(msg)
+        self._env.message.append(msg)
 
     def on_sun_sink(self, day):
-        logging.info(f"day event the run sink ... day {day}")
+        msg = f"day event the run sink ... day {day}"
+        logging.debug(msg)
+        self._env.message.append(msg)
 
     def on_second_elapse(self, event):
         assert self is not None
-        logging.debug(f"second elapse ... {event}")
+        # logging.debug(f"second elapse ... {event}")
 
     def on_season_change(self, new_season):
         assert self is not None
-        logging.info(" season change ... ")
-        logging.info(f" a new season begin ... season {new_season}")
+        msg = f" a new season begin ... season {new_season}"
+        logging.debug(msg)
+        self._env.message.append(msg)
 

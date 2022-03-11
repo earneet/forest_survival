@@ -24,5 +24,41 @@ class Event:
         return self._args
 
 
+class StopMove(Event):
+    pass
+
+
+class MoveTop(Event):
+    pass
+
+
+class MoveLeft(Event):
+    pass
+
+
+class MoveBottom(Event):
+    pass
+
+
+class MoveRight(Event):
+    pass
+
+
+class Attack(Event):
+    pass
+
+
+class Collecting(Event):
+    pass
+
+
+class Resting(Event):
+    pass
+
+
+class UseItem(Event):
+    pass
+
+
 class InputEvent(Event):
     pass

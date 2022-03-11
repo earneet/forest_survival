@@ -1,11 +1,13 @@
 
 {
   "wool": {
+    "usable": false,
     "effect": {
     }
   },
 
   "meat": {
+    "usable": true,
     "effect": {
       "hp": 5,
       "hunger": 5
@@ -13,18 +15,21 @@
   },
 
   "cotton": {
+    "usable": false,
     "effect": {
 
     }
   },
 
   "apple": {
+    "usable": true,
     "effect": {
       "hunger": 2
     }
   },
 
   "herb": {
+    "usable": true,
     "effect": {
       "hp": 10
     }
