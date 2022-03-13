@@ -1,7 +1,11 @@
 
 {
   "stick_equip": {
+    "name": "stick_equip",
     "attack": 1,
-    "wear": 10
+    "wear": 10,
+    "effect": {
+      "attack": 1
+    }
   }
 }

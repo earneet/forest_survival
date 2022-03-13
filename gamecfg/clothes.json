@@ -1,6 +1,7 @@
 
 {
   "cotton_clothes": {
+    "name": "cotton_clothes",
     "wear": 50,
     "recipe": {
       "materials": {
@@ -17,6 +18,7 @@
   },
 
   "gown_clothes": {
+    "name": "gown_clothes",
     "wear": 50,
     "recipe": {
       "materials": {
@@ -31,6 +33,7 @@
   },
 
   "t_shirt_clothes": {
+    "name": "t_shirt_clothes",
     "wear": 50,
     "recipe": {
       "materials": {
@@ -45,6 +48,7 @@
   },
 
   "vest_clothes": {
+    "name": "vest_clothes",
     "wear": 50,
     "recipe": {
       "materials": {

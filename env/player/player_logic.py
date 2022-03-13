@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 
 from event import StopMove, MoveTop, MoveLeft, MoveRight, Attack, Collecting, Resting
-from items.item import Equip, Cloth, make_equip
+from items.item import Equip, Cloth, make_equip, make_cloth
 from .player import MoveType, PlayerState, SlotType
 
 
@@ -25,7 +25,6 @@ class PlayerMoveLogic:
         elif player.sub_state == MoveType.SWIMMING:
             speed = 3 * env.STEP_BREAK
         else:
-            # invalid state
             assert False, "invalid state"
 
         # hunger effect
@@ -276,8 +275,10 @@ class PlayerLogic:
             self.player.message.append(f"try to make a {item} but have no enough materials for make a {item}")
             # todo show a message box
             return False
-
-        return False
+        cloth = make_cloth(item)
+        self._remove_cost(cfg.recipe.materials)
+        self._put_handy(cloth)
+        return True
 
     def _make_equip(self, item) -> bool:
         from items import equip_cfg
@@ -290,12 +291,30 @@ class PlayerLogic:
             self.player.message.append(f"try to make a {item} but have no enough materials for make a {item}")
             # todo show a message box
             return False
-        make_equip(item)
-        return False
+        equip = make_equip(item)
+        self._remove_cost(cfg.recipe.materials)
+        self._put_handy(equip)
+        return True
 
     def _check_material(self, materials) -> bool:
-        # todo implement check function
-        return False
+        haven = {}
+        for s, cnt in self.player.handy_items:
+            if not isinstance(s, str):
+                s = s.name()
+            if s not in haven:
+                haven[s] = cnt
+            else:
+                haven[s] += cnt
+        for name, cnt in materials:
+            if name not in haven or cnt > haven[name]:
+                return False
+        return True
+
+    def _remove_cost(self, materials):
+        pass
+
+    def _put_handy(self, item):
+        pass
 
     def can_damage_by(self, attacker):
         return self.battle_logic.can_damage_by(attacker)

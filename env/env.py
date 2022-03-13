@@ -51,7 +51,6 @@ class Env:
     YEAR_SEASON_RATIO = 4
 
     def __init__(self, render: bool = False):
-        self.engine = Engine()
         self.logic = EnvLogic(self)
         self.timer = TimerManager()
         self.render = render
@@ -62,6 +61,7 @@ class Env:
         self.frames = 0
         self.map = None
         self.message = []
+        self.engine = Engine(self)
 
     def get_global_temperature(self):
         return SeasonTemperatures[self.season]

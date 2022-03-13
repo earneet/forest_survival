@@ -8,6 +8,9 @@ class Equip:
         self.cfg = cfg
         self.wear = cfg.wear
 
+    def name(self):
+        return self.cfg.name
+
     def get_attack(self) -> int:
         return self.cfg.attack
 
