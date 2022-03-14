@@ -6,6 +6,7 @@ from env.engine.gameitem import GameItem
 import itertools
 import numpy as np
 
+from event import Event
 
 player_id = itertools.count()
 next(player_id)
@@ -41,6 +42,19 @@ class DirectionEnum(IntEnum):
     LEFT = 4
 
 
+Direction2Vec = {
+    DirectionEnum.UP: np.array([0, -1]),
+    DirectionEnum.RIGHT: np.array([1, 0]),
+    DirectionEnum.DOWN: np.array([0, 1]),
+    DirectionEnum.LEFT: np.array([-1, 0]),
+    DirectionEnum.INVALID: np.array([0, 0])
+}
+
+def get_vec_by_direction(_dir):
+    assert isinstance(_dir, DirectionEnum)
+    return Direction2Vec[_dir]
+
+
 WEAPON_SLOT = 0
 CLOTHES_SLOT = 1
 
@@ -65,11 +79,11 @@ class Player(GameItem):
         self.equips = [None, None]                  # equip slots, two slot, one for weapon, one for clothes
         self.energy = 100
         self.hp_max = 100
+        self.hunger = 10000
         self.hp = 100
         self.attack = 10
         self.attack_frame = 0                       # attack settlement frame
         self.collect_frame = 0
-        self.hunger = 10
         self.position = np.array([0, 0])            # use numpy array to make compute handy
         self.direction = DirectionEnum.UP
         self.speed = 0
@@ -121,3 +135,7 @@ class Player(GameItem):
 
     def trim_house(self):
         pass
+
+    def receive_event(self, event):
+        assert isinstance(event, Event)
+        self.events.append(event)

@@ -14,9 +14,13 @@ class MapLogicBase(abc.ABC):
         return True
 
     def on_player_move_in(self, player):
-        pass
+        if player.sub_state == MoveType.SWIMMING and len(player.sub_state_stack) > 0:
+            player.sub_state = player.sub_state_stack.pop()
 
     def on_player_move_out(self, player):
+        pass
+
+    def on_player_start_move(self, player):
         pass
 
 
@@ -39,8 +43,8 @@ class MapLogicRiver(MapLogicBase):
             player.sub_state_stack.append(player.sub_state)
             player.sub_state = MoveType.SWIMMING
 
-    def on_player_move_out(self, player):
-        player.sub_state = player.sub_state_stack.pop()
+    def on_player_start_move(self, player):
+        player.sub_state = MoveType.SWIMMING
 
 
 class MapLogicForest(MapLogicBase):
@@ -55,10 +59,16 @@ class MapLogicForest(MapLogicBase):
     def on_player_move_out(self, player):
         player.sub_state = player.sub_state_stack.pop()
 
+    def on_player_start_move(self, player):
+        player.sub_state = MoveType.WALKING
+
 
 class MapLogicHouse(MapLogicBase):
     def __init__(self, cell):
         super().__init__(cell)
+
+    def on_player_start_move(self, player):
+        pass
 
 
 Terrain2Logic = {

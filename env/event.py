@@ -28,19 +28,19 @@ class StopMove(Event):
     pass
 
 
-class MoveTop(Event):
-    pass
-
-
-class MoveLeft(Event):
-    pass
-
-
-class MoveBottom(Event):
+class MoveUp(Event):
     pass
 
 
 class MoveRight(Event):
+    pass
+
+
+class MoveDown(Event):
+    pass
+
+
+class MoveLeft(Event):
     pass
 
 

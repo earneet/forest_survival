@@ -11,7 +11,9 @@ animal_cfg = json.loads(animal_cfg)
 animal_cfg = DefaultMunch.fromDict(animal_cfg)
 
 
-def new_animal(specie, cfg):
-    ani = Animal(specie, cfg)
+def new_animal(specie):
+    assert specie in animal_cfg
+    cfg = animal_cfg[specie]
+    ani = Animal(cfg)
     ani._logic = AnimalLogic(ani)
     return ani

@@ -1,4 +1,6 @@
 from typing import List, Sequence
+
+import numpy as np
 from munch import DefaultMunch
 from random import shuffle
 
@@ -6,7 +8,7 @@ from . import MapCell, Terrain
 
 
 class Map:
-    def __init__(self, x=20, y=20, cell_size=10.0):
+    def __init__(self, x=20, y=20, cell_size=20.0):
         self.cell_x = x
         self.cell_y = y
         self.cell_size = cell_size
@@ -28,7 +30,7 @@ class Map:
         return self.cells[y * self.cell_x + x]
 
     def get_cell_by_pos(self, pos):
-        assert isinstance(pos, Sequence) and len(pos) == 2
+        assert (isinstance(pos, Sequence) or isinstance(pos, np.ndarray)) and len(pos) == 2
         pos_x, pos_y = pos
         x, y = int(pos_x / self.cell_size), int(pos_y / self.cell_size)
         return self.get_cell(x, y)

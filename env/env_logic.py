@@ -50,13 +50,13 @@ class EnvLogic:
         frames = self._env.frames + 1
         self._env.frames += 1
         for player in self._env.players:
-            player.update(frames)
+            player.update()
 
         for animal in self._env.animals:
-            animal.update(frames)
+            animal.update()
 
         for plant in self._env.plants:
-            plant.update(frames)
+            plant.update()
 
         self._env.players = [p for p in self._env.players if p.hp > 0]
         self._env.animals = [p for p in self._env.animals if p.hp > 0]
@@ -102,12 +102,14 @@ class EnvLogic:
     def _refresh_init_players(self):
         map = self._env.map
         self._env.players = []
-        cells = map.select_cells(5)
+        cells = map.select_cells(string2terrains("SELF_HOUSE"))
         for cell in cells:
             y = cell.y
             x = cell.x
             player = Player(self._env)
             player.position = ((x + 0.5) * map.cell_size, (y + 0.5) * map.cell_size)
+            logging.warning(f"spawn a {player.get_name()} at cell {cell.x},{cell.y}, "
+                            f"position ({player.position[0]},{player.position[1]})")
             self._env.players.append(player)
             cell.player_move_in(player)
 
@@ -150,9 +152,11 @@ class EnvLogic:
 
     def _refresh_animals_species(self, species, cfg, cells):
         for cell in cells:
-            sp = new_animal(species, cfg)
+            sp = new_animal(species)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
+            logging.warning(f"spawn a {species} at cell {cell.x},{cell.y}"
+                            f" position ({pos_x},{pos_y})")
             self._env.animals.append(sp)
 
     def _refresh_plants_species(self, species, cells):
@@ -161,6 +165,8 @@ class EnvLogic:
             sp = new_plant(species)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
+            logging.warning(f"spawn a {species} at cell {cell.x},{cell.y}  "
+                            f"position ({pos_x},{pos_y})")
             self._env.plants.append(sp)
 
     def on_new_day(self, new_day):

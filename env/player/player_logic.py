@@ -1,9 +1,9 @@
 import logging
 from collections import defaultdict
 
-from event import StopMove, MoveTop, MoveLeft, MoveRight, Attack, Collecting, Resting
+from event import StopMove, MoveDown, MoveUp, MoveLeft, MoveRight, Attack, Collecting, Resting
 from items.item import Equip, Cloth, make_equip, make_cloth
-from .player import MoveType, PlayerState, SlotType
+from .player import MoveType, PlayerState, SlotType, get_vec_by_direction
 
 
 class PlayerMoveLogic:
@@ -13,7 +13,7 @@ class PlayerMoveLogic:
     def get_player_move_speed(self):
         player = self.player
         env = player.env
-        env.get_season_temperature()
+        env.get_global_temperature()
 
         # move type speed
         speed = 1.0
@@ -45,7 +45,7 @@ class PlayerMoveLogic:
         env = player.env
         speed = self.get_player_move_speed()
         cur_pos = player.position
-        tar_pos = cur_pos + speed * player.direction
+        tar_pos = speed * get_vec_by_direction(player.direction) + cur_pos
         cur_cell = env.map.get_cell_by_pos(cur_pos)
         tar_cell = env.map.get_cell_by_pos(tar_pos)
         if not tar_cell.player_can_move_in(player):
@@ -55,16 +55,35 @@ class PlayerMoveLogic:
             player.sub_state = None
             return
         player.position = tar_pos
+        #if tar_pos != cur_pos:
+        logging.warning(f"player move from {cur_pos} to {tar_pos}")
         cur_cell.player_move_out(player)
         tar_cell.player_move_in(player)
 
     def process_event_stop(self, event):
-        if self.player.state == PlayerState.MOVING:
-            pass
-        pass
+        if self.player.state != PlayerState.MOVING:
+            return
+        self.player.state = PlayerState.IDLE
 
     def process_event_move(self, event):
-        pass
+        from player.player import DirectionEnum
+        if self.player.state != PlayerState.MOVING:
+            cell = self.player.env.map.get_cell_by_pos(self.player.position)
+            self.player.state = PlayerState.MOVING
+            self.player.sub_state = MoveType.RUNNING
+            if hasattr(cell, "on_player_start_move"):
+                cell.on_player_start_move()
+
+        if isinstance(event, MoveUp):
+            self.player.direction = DirectionEnum.UP
+        elif isinstance(event, MoveRight):
+            self.player.direction = DirectionEnum.RIGHT
+        elif isinstance(event, MoveDown):
+            self.player.direction = DirectionEnum.DOWN
+        elif isinstance(event, MoveLeft):
+            self.player.direction = DirectionEnum.LEFT
+        else:
+            assert False, "invalid move event"
 
     def _move_to_edge(self, cell):
         player = self.player
@@ -142,10 +161,6 @@ class PlayerBattleLogic:
         return damage
 
 
-class MoveDown:
-    pass
-
-
 class PlayerLogic:
 
     MOVETYPE2HUNGERCOST = defaultdict(int)
@@ -198,7 +213,7 @@ class PlayerLogic:
         return self.player.env.get_global_temperature() + self.get_delta_temperature()
 
     def get_delta_temperature(self):
-        cell = self.player.map.get_cell_by_pos(self.player.position)
+        cell = self.player.env.map.get_cell_by_pos(self.player.position)
         terrain_delta = cell.get_temperature_delta()
         from player import CLOTHES_SLOT
         equipment = self.player.equips[CLOTHES_SLOT]
@@ -327,7 +342,7 @@ class PlayerLogic:
             event = self.player.events.pop(0)
             if isinstance(event, StopMove):
                 self.move_logic.process_event_stop(event)
-            elif isinstance(event, (MoveTop, MoveLeft, MoveDown, MoveRight)):
+            elif isinstance(event, (MoveUp, MoveLeft, MoveDown, MoveRight)):
                 self.move_logic.process_event_move(event)
             elif isinstance(event, Attack):
                 self.battle_logic.process_event_attack(event)

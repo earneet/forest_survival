@@ -7,7 +7,7 @@ root_logger.setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     logging.debug("Starting ... ")
-    env = Env()
+    env = Env(render=True)
     env.reset()
     # env.render()
 

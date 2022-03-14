@@ -1,12 +1,12 @@
-from enum import Enum
+from enum import IntEnum
 
-from engine import Engine
+from engine import get_engine
 from env_logic import EnvLogic
 from map import Map
 from timer import TimerManager
 
 
-class Season(Enum):
+class Season(IntEnum):
     SPRING = 1
     SUMMER = 2
     AUTUMN = 3
@@ -19,26 +19,6 @@ SeasonTemperatures = {
     Season.AUTUMN: 18,
     Season.WINTER: 10
 }
-
-
-class Direction(Enum):
-    NORTH = 1
-    EAST = 2
-    SOUTH = 3
-    WEST = 4
-
-
-Direction2Vec = {
-    Direction.NORTH: (0, 1),
-    Direction.EAST: (1, 0),
-    Direction.SOUTH: (0, -1),
-    Direction.WEST: (-1, 0)
-}
-
-
-def get_vec_by_direction(_dir):
-    assert isinstance(_dir, Direction)
-    return Direction2Vec[_dir]
 
 
 class Env:
@@ -61,16 +41,18 @@ class Env:
         self.frames = 0
         self.map = None
         self.message = []
-        self.engine = Engine(self)
+        self.engine = get_engine()
+        self.engine.set_env(self)
 
     def get_global_temperature(self):
         return SeasonTemperatures[self.season]
 
     def reset(self):
-        self.engine.reset()
         self.frames = 0
         self.map = Map()
         self.logic.reset()
+        self.engine.set_env(self)
+        self.engine.reset()
 
     def step(self, actions):
         assert actions is not None, "actions Can't be None"

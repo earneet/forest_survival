@@ -8,8 +8,11 @@ class Plant(GameItem, abc.ABC):
         super().__init__()
         self.collectors = {}
         self.cfg = cfg
+        self.hp = 1     # all plants has a default hp value 1, when it be collected, change to 0
+        self.position = [0, 0]
         self._species = cfg.species
 
+    @property
     def species(self) -> str:
         return self._species
 

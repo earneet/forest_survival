@@ -1,6 +1,8 @@
 import abc
 from enum import Enum
 
+import numpy as np
+
 from env.engine.gameitem import GameItem
 
 class AnimalState(Enum):
@@ -14,6 +16,7 @@ class Animal(GameItem, abc.ABC):
         super().__init__()
         self.cfg = cfg
         self.hp = int(cfg.attribute.hp)
+        self.position = np.array([0, 0])
         self.move_speed = int(cfg.attribute.speed)
         self.ai_instance = None
         self._species = cfg.species
@@ -37,6 +40,7 @@ class Animal(GameItem, abc.ABC):
     def drop(self):
         return self._logic.drop()
 
+    @property
     def species(self) -> str:
         return self._species
 
