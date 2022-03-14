@@ -274,33 +274,18 @@ class PlayerLogic:
     def make(self, item) -> bool:
         assert isinstance(item, str)
         if item.endswith("_clothes"):
-            return self._make_cloth(item)
+            from items import clothes_cfg
+            return self._make(item, clothes_cfg)
         elif item.endswith("_equip"):
-            return self._make_equip(item)
+            from items import equip_cfg
+            return self._make(item, equip_cfg)
         return False    # all other prop don't need be make
 
-    def _make_cloth(self, item) -> bool:
-        from items import clothes_cfg
-        if item not in clothes_cfg:
-            logging.error(f"try to make a nonexistent cloth {item}")
-            return False
-        cfg = clothes_cfg[item]
-        if not self._check_material(cfg.recipe.materials):
-            logging.warning(f"have no enough materials for make a {item}")
-            self.player.message.append(f"try to make a {item} but have no enough materials for make a {item}")
-            # todo show a message box
-            return False
-        cloth = make_cloth(item)
-        self._remove_cost(cfg.recipe.materials)
-        self._put_handy(cloth)
-        return True
-
-    def _make_equip(self, item) -> bool:
-        from items import equip_cfg
-        if item not in equip_cfg:
+    def _make(self, item, item_cfgs) -> bool:
+        if item not in item_cfgs:
             logging.error(f"try to make a nonexistent equip {item}")
             return False
-        cfg = equip_cfg[item]
+        cfg = item_cfgs[item]
         if not self._check_material(cfg.recipe.materials):
             logging.warning(f"have no enough materials for make a {item}")
             self.player.message.append(f"try to make a {item} but have no enough materials for make a {item}")

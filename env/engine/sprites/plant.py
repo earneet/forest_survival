@@ -21,5 +21,4 @@ class EPlant(pg.sprite.Sprite):
         self.rect.centerx, self.rect.centery = self.game_obj.position[0], self.game_obj.position[1]
 
     def update(self):
-        logging.error("plant update")
         self.rect.centerx, self.rect.centery = self.game_obj.position[0], self.game_obj.position[1]

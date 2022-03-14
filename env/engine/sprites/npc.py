@@ -19,7 +19,6 @@ class ENpc(pg.sprite.Sprite):
         self.update_pos()
 
     def update(self):
-        logging.error("npc update")
         self.update_pos()
 
     def update_pos(self):

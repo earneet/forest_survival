@@ -21,4 +21,3 @@ class EAnimal(pg.sprite.Sprite):
 
     def update(self):
         self.rect.centerx, self.rect.centery = self.game_obj.position[0], self.game_obj.position[1]
-        # self.rect.move_ip(self.game_obj.position[0], self.game_obj.position[1])
