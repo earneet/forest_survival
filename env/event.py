@@ -52,12 +52,27 @@ class Collecting(Event):
     pass
 
 
+class CollectEnd(Event):
+    def __init__(self, src, dest):
+        super(CollectEnd, self).__init__()
+        self.src = src
+        self.dest = dest
+
+
 class Resting(Event):
     pass
 
 
 class UseItem(Event):
-    pass
+    def __init__(self, idx):
+        super(UseItem, self).__init__()
+        self.idx = idx
+
+
+class DropItem(Event):
+    def __init__(self, idx):
+        super(DropItem, self).__init__()
+        self.idx = idx
 
 
 class InputEvent(Event):

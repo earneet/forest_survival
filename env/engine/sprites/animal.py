@@ -1,4 +1,3 @@
-
 import pygame as pg
 
 
@@ -12,7 +11,7 @@ class EAnimal(pg.sprite.Sprite):
         if not self.animal2image:
             from animals import animal_cfg
             for name in animal_cfg:
-                from engine.engine import load_image
+                from engine.utils import load_image
                 self.animal2image[name] = load_image(name+".png", -1)
         self.image = self.animal2image[self.game_obj.species]
         self.rect = self.image.get_rect()

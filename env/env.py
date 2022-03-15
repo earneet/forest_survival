@@ -24,7 +24,7 @@ SeasonTemperatures = {
 class Env:
     STEP_FRAME_INTERVAL = 10
     STEP_BREAK = 1 / STEP_FRAME_INTERVAL
-    HOUR_SECOND_RATIO = 24  # * 60 * 60
+    HOUR_SECOND_RATIO = 2  # * 60 * 60
     DAY_HOUR_RATIO = 24
     MONTH_DAY_RATIO = 30
     SEASON_MONTH_RATIO = 3

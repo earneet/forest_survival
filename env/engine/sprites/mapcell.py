@@ -11,7 +11,7 @@ class EMapCell(pg.sprite.Sprite):
         super().__init__(self.containers)
         self.game_obj = game_obj
 
-        from engine.engine import load_image
+        from engine.utils import load_image
         if not self.terrain2images:
             self.terrain2images = {
                 Terrain.FOREST: load_image("forest.png"),

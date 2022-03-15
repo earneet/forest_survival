@@ -1,44 +1,16 @@
 import sys
 
 import pygame as pg
-import os
-import logging
 
-from event import MoveUp, MoveRight, MoveDown, MoveLeft, StopMove
+from event import MoveUp, MoveRight, MoveDown, MoveLeft, StopMove, Collecting
 from .sprites.animal import EAnimal
+from .sprites.handy import EHandy
 from .sprites.mapcell import EMapCell
 from .sprites.npc import ENpc
 from .sprites.plant import EPlant
+from .sprites.playerinfo import EPlayerInfo
 
-root_dir = os.path.dirname(__file__)
-data_dir = os.path.join(root_dir, "res")
-
-
-def load_image(name, colorkey=None, scale=1):
-    full_name = os.path.join(data_dir, name)
-    image = pg.image.load(full_name)
-    size = image.get_size()
-    size = (int(size[0] * scale), int(size[1] * scale))
-    image = pg.transform.scale(image, size)
-    image = image.convert()
-    if colorkey is not None:
-        if colorkey == -1:
-            colorkey = image.get_at((2, 2))
-        image.set_colorkey(colorkey, pg.RLEACCEL)
-    return image
-
-
-def load_sound(name):
-    if not pg.mixer:
-        return None
-    file = os.path.join(data_dir, name)
-    try:
-        sound = pg.mixer.Sound(file)
-        return sound
-    except pg.error:
-        logging.warning(f"Warning, unable to load, {file}")
-    return None
-
+move_buttons = {pg.K_UP, pg.K_RIGHT, pg.K_DOWN, pg.K_LEFT, pg.K_w, pg.K_d, pg.K_s, pg.K_a}
 
 class Engine:
     def __init__(self):
@@ -47,6 +19,7 @@ class Engine:
         self.plants_g = None
         self.animals_g = None
         self.players_g = None
+        self.ui_g = None
         self.all_g = None
         self.screen = None
         self._env = None
@@ -65,55 +38,45 @@ class Engine:
     def reset(self):
         pg.init()
         winstyle = 0
-        SCREENRECT = pg.Rect(0, 0, 640, 480)
-        bestdepth = pg.display.mode_ok(SCREENRECT.size, winstyle, 32)
-        self.screen = pg.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
-        #self.screen = pg.display.set_mode((640, 480))
-        self.background = pg.surface.Surface(SCREENRECT.size)
+        screenrect = pg.Rect(0, 0, 640, 480)
+        bestdepth = pg.display.mode_ok(screenrect.size, winstyle, 32)
+        self.screen = pg.display.set_mode(screenrect.size, winstyle, bestdepth)
+        self.background = pg.surface.Surface(screenrect.size)
         pg.display.set_caption("forest_survival")
         self.mapcells_g = pg.sprite.Group()
-        self.players_g = pg.sprite.Group()
         self.animals_g = pg.sprite.Group()
         self.plants_g = pg.sprite.Group()
+        self.players_g = pg.sprite.Group()
+        self.ui_g = pg.sprite.Group()
         self.all_g = pg.sprite.RenderUpdates()
 
         EMapCell.containers = self.all_g
-        ENpc.containers = self.players_g, self.all_g
         EAnimal.containers = self.animals_g, self.all_g
         EPlant.containers = self.plants_g, self.all_g
         EMapCell.containers = self.mapcells_g, self.all_g
+        ENpc.containers = self.players_g, self.all_g
+        EPlayerInfo.containers = self.all_g
+        EHandy.containers = self.ui_g, self.all_g
 
         # prepare map cell sprite
         map = self._env.map
         for cell in map.cells:
             self.cells.append(EMapCell(cell))
+        EPlayerInfo(self._env.players[0])
+        EHandy(self._env.players[0])
+        # self.all_g.add()
+        # self.all_g.add()
 
     def render(self):
         self.all_g.draw(self.screen)
         pg.display.update()
-        return
-
-        for cell in self.cells:
-            self.background.blit(cell.image, cell.rect)
-
-        for plant in self.plants:
-            self.background.blit(plant.image, plant.rect)
-
-        for animal in self.animals:
-            self.background.blit(animal.image, animal.rect)
-
-        for player in self.players:
-            self.background.blit(player.image, player.rect)
-
-        self.screen.blit(self.background, self.background.get_rect())
-        pg.display.flip()
 
     def process_event(self):
         for e in pg.event.get():
             if e.type == pg.QUIT:
                 sys.exit()
             elif e.type == pg.MOUSEBUTTONDOWN:
-                self._process_mouse_click(e)
+                self._process_mouse_click(e, e.button)
             elif e.type == pg.KEYDOWN:
                 self._process_key_down(e)
             elif e.type == pg.KEYUP:
@@ -121,22 +84,37 @@ class Engine:
 
     def _process_key_down(self, event):
         key = event.key
-        if key == pg.K_UP:
+        if key in move_buttons:     # move
+            self._process_key_for_move(event)
+        elif key == pg.K_c:         # collect
+            self._process_key_for_collect(event)
+
+    def _process_key_for_collect(self, event):
+        self._env.players[0].receive_event(Collecting())
+
+    def _process_key_for_move(self, event):
+        key = event.key
+        if key == pg.K_UP or key == pg.K_w:
             self._env.players[0].receive_event(MoveUp())
-        if key == pg.K_RIGHT:
+        if key == pg.K_RIGHT or key == pg.K_d:
             self._env.players[0].receive_event(MoveRight())
-        elif key == pg.K_DOWN:
+        elif key == pg.K_DOWN or key == pg.K_s:
             self._env.players[0].receive_event(MoveDown())
-        elif key == pg.K_LEFT:
+        elif key == pg.K_LEFT or key == pg.K_a:
             self._env.players[0].receive_event(MoveLeft())
 
     def _process_key_up(self, event):
-        key = event.key
+        if event.key not in move_buttons:
+            return
+        pressed_keys = pg.key.get_pressed()
+        for k in move_buttons:
+            if pressed_keys[k]:
+                return
         self._env.players[0].receive_event(StopMove())
 
-    def _process_mouse_click(self, event):
-        x, y = event.pos
-        logging.info(f"mouse clicked at ({x} {y})")
+    def _process_mouse_click(self, event, button):
+        for sprite in self.ui_g:
+            sprite.check_click(event.pos, button)
 
     def quit(self):
         self.mapcells_g = None
@@ -159,24 +137,33 @@ class Engine:
         return _engine
 
     def _do_diff(self):
-        new_players, dumped_players = self._find_diff_players()
         new_plants, dumped_plants = self._find_diff_plants()
         new_animals, dumped_animals = self._find_diff_animals()
-
-        players = [p for p in self.players if p not in dumped_players]
-        for new_player in new_players:
-            players.append(ENpc(new_player))
-        self.players = players
+        new_players, dumped_players = self._find_diff_players()
 
         plants = [p for p in self.plants if p not in dumped_plants]
         for new_plant in new_plants:
             plants.append(EPlant(new_plant))
         self.plants = plants
+        for dumped_plant in dumped_plants:
+            self.plants_g.remove(dumped_plant)
+            self.all_g.remove(dumped_plant)
 
         animals = [a for a in self.animals if a not in dumped_animals]
         for new_animal in new_animals:
             animals.append(EAnimal(new_animal))
         self.animals = animals
+        for dumped_animal in dumped_animals:
+            self.animals_g.remove(dumped_animal)
+            self.all_g.remove(dumped_animal)
+
+        players = [p for p in self.players if p not in dumped_players]
+        for new_player in new_players:
+            players.append(ENpc(new_player))
+        self.players = players
+        for dumped_player in dumped_players:
+            self.players_g.remove(dumped_player)
+            self.all_g.remove(dumped_player)
 
     def _find_diff_players(self):
         cur = self._env.players

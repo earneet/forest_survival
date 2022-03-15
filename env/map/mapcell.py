@@ -52,12 +52,13 @@ class MapLogicForest(MapLogicBase):
         super().__init__(cell)
 
     def on_player_move_in(self, player):
-        if player.state == PlayerState.MOVING and player.sub_state == MoveType.RUNNING:
+        if player.state == PlayerState.MOVING:
             player.sub_state_stack.append(player.sub_state)
             player.sub_state = MoveType.WALKING
 
     def on_player_move_out(self, player):
-        player.sub_state = player.sub_state_stack.pop()
+        if len(player.sub_state_stack):
+            player.sub_state = player.sub_state_stack.pop()
 
     def on_player_start_move(self, player):
         player.sub_state = MoveType.WALKING
@@ -97,6 +98,12 @@ class MapCell:
         self.animals = []
         self.players = []
         self._logic = Terrain2Logic[terrain](self)
+
+    def spawn_plant(self, plant):
+        self.plants.append(plant)
+
+    def spawn_animal(self, animal):
+        self.animals.append(animal)
 
     def player_can_move_in(self, player):
         return self._logic.can_move_in(player)

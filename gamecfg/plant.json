@@ -7,7 +7,8 @@
       "stick_equip": 1
     },
 
-    "terrains": ["forest"]
+    "terrains": ["forest"],
+    "collect_time": 5
   },
 
   "apple_plant": {
@@ -16,7 +17,8 @@
     "drop": {
       "apple": 1
     },
-    "terrains": ["forest"]
+    "terrains": ["forest"],
+    "collect_time": 1
   },
 
   "herb_plant": {
@@ -25,7 +27,8 @@
     "drop": {
       "herb": 1
     },
-    "terrains": ["lawn"]
+    "terrains": ["lawn"],
+    "collect_time": 1
   },
 
   "cotton_plant": {
@@ -34,6 +37,7 @@
     "drop": {
       "cotton": 3
     },
-    "terrains": ["forest"]
+    "terrains": ["forest"],
+    "collect_time": 1
   }
 }

@@ -11,6 +11,6 @@ plant_cfg = json.loads(plant_cfg)
 plant_cfg = DefaultMunch.fromDict(plant_cfg)
 
 
-def new_plant(specie):
+def new_plant(specie, env):
     cfg = plant_cfg[specie]
-    return Plant(cfg)
+    return Plant(cfg, env)

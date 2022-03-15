@@ -20,6 +20,9 @@ class Cloth:
         self.cfg = cfg
         self.wear = cfg.wear
 
+    def name(self):
+        return self.cfg.name
+
     def get_temperature_delta(self) -> int:
         return self.cfg.effect.temperature
 

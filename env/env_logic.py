@@ -25,6 +25,9 @@ class EnvLogic:
         self.MONTH_FRAMES = self.DAY_FRAMES * env.MONTH_DAY_RATIO
         self.SEASON_FRAMES = self.MONTH_FRAMES * env.SEASON_MONTH_RATIO
         self.YEAR_FRAMES = self.SEASON_FRAMES * env.YEAR_SEASON_RATIO
+        env.HOUR_FRAMES = self.HOUR_FRAMES
+        env.DAY_FRAMES = self.DAY_FRAMES
+        env.MONTH_FRAMES = self.MONTH_FRAMES
 
     def reset(self):
         timer = self._env.timer
@@ -152,21 +155,23 @@ class EnvLogic:
 
     def _refresh_animals_species(self, species, cfg, cells):
         for cell in cells:
-            sp = new_animal(species)
+            sp = new_animal(species, self._env)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
-            logging.warning(f"spawn a {species} at cell {cell.x},{cell.y}"
-                            f" position ({pos_x},{pos_y})")
+            cell.spawn_animal(sp)
+            logging.info(f"spawn a {species} at cell {cell.x},{cell.y}"
+                         f" position ({pos_x},{pos_y})")
             self._env.animals.append(sp)
 
     def _refresh_plants_species(self, species, cells):
         from plants import new_plant
         for cell in cells:
-            sp = new_plant(species)
+            sp = new_plant(species, self._env)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
             sp.position = np.array([pos_x, pos_y])
-            logging.warning(f"spawn a {species} at cell {cell.x},{cell.y}  "
-                            f"position ({pos_x},{pos_y})")
+            cell.spawn_plant(sp)
+            logging.info(f"spawn a {species} at cell {cell.x},{cell.y}  "
+                         f"position ({pos_x},{pos_y})")
             self._env.plants.append(sp)
 
     def on_new_day(self, new_day):

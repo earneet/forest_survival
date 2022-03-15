@@ -80,16 +80,19 @@ class Player(GameItem):
         self.energy = 100
         self.hp_max = 100
         self.hunger = 10000
-        self.hp = 100
+        self.hp = 50
         self.attack = 10
         self.attack_frame = 0                       # attack settlement frame
         self.collect_frame = 0
         self.position = np.array([0, 0])            # use numpy array to make compute handy
         self.direction = DirectionEnum.UP
-        self.speed = 0
         self.killer = None                          # who killed me
         self.active_message = []
         self.passive_message = []
+
+    @property
+    def speed(self):
+        return self._logic.get_player_move_speed()
 
     def get_name(self):
         return "player_" + str(self.id)
@@ -99,7 +102,7 @@ class Player(GameItem):
             self._logic.update()
 
     def is_dead(self):
-        return self.hp > 0
+        return self.hp <= 0
 
     def get_fells_temperature(self):
         return self._logic.get_fells_temperature()
@@ -114,21 +117,27 @@ class Player(GameItem):
                                         f'damage {real_damage} {"dead" if self.is_dead() else ""}')
         return real_damage
 
+    def find_interact_target(self):
+        return self._logic.find_interact_target()
+
     def on_new_day(self):
         if hasattr(self._logic, "on_new_day"):
             self._logic.on_new_day()
 
-    def equip(self, handy_idx, slot=SlotType.EQUIP):
-        self._logic.equip(handy_idx, slot)
+    def un_equip(self, slot):
+        self._logic.un_equip(slot)
 
-    def use(self, handy_idx):
+    def use(self, handy_idx: int):
         self._logic.use(handy_idx)
+
+    def drop(self, handy_idx: int):
+        self._logic.drop(handy_idx)
 
     def make(self, item):
         self._logic.make(item)
 
     def pickup(self, items):
-        pass
+        self._logic.pickup(items)
 
     def trim_handy(self):
         pass
@@ -139,3 +148,11 @@ class Player(GameItem):
     def receive_event(self, event):
         assert isinstance(event, Event)
         self.events.append(event)
+
+    def __getitem__(self, name):
+        if hasattr(self, name):
+            return getattr(self, name)
+        return None
+
+    def __setitem__(self, name, value):
+        setattr(self, name, value)

@@ -12,9 +12,11 @@ class AnimalState(Enum):
 
 
 class Animal(GameItem, abc.ABC):
-    def __init__(self, cfg):
+    def __init__(self, cfg, env):
+        assert env is not None
         super().__init__()
         self.cfg = cfg
+        self.env = env
         self.hp = int(cfg.attribute.hp)
         self.position = np.array([0, 0])
         self.move_speed = int(cfg.attribute.speed)

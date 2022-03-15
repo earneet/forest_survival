@@ -29,11 +29,25 @@ class Map:
         assert x < self.cell_x and y < self.cell_y, "x, y should be limit"
         return self.cells[y * self.cell_x + x]
 
-    def get_cell_by_pos(self, pos):
+    def pos_2_xy(self, pos):
         assert (isinstance(pos, Sequence) or isinstance(pos, np.ndarray)) and len(pos) == 2
         pos_x, pos_y = pos
-        x, y = int(pos_x / self.cell_size), int(pos_y / self.cell_size)
+        return int(pos_x / self.cell_size), int(pos_y / self.cell_size)
+
+    def get_cell_by_pos(self, pos):
+        x, y = self.pos_2_xy(pos)
         return self.get_cell(x, y)
+
+    def get_round_cells_by_pos(self, pos, scope=1):
+        x, y = self.pos_2_xy(pos)
+        return self.get_round_cells(x, y, scope)
+
+    def get_round_cells(self, x, y, scope=1):
+        cells = []
+        for iy in range(max(0, y-scope), min(y + scope + 1, self.cell_y)):
+            for ix in range(max(0, x-scope), min(x + scope + 1, self.cell_x)):
+                cells.append(self.get_cell(ix, iy))
+        return cells
 
     def get_cell_edge(self, cell):
         assert isinstance(cell, MapCell) and isinstance(cell.x, int) and isinstance(cell.y, int)
