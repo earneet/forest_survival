@@ -139,6 +139,9 @@ class Player(GameItem):
     def pickup(self, items):
         self._logic.pickup(items)
 
+    def rest(self):
+        self._logic.rest()
+
     def trim_handy(self):
         pass
 

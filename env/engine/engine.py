@@ -12,6 +12,7 @@ from .sprites.playerinfo import EPlayerInfo
 
 move_buttons = {pg.K_UP, pg.K_RIGHT, pg.K_DOWN, pg.K_LEFT, pg.K_w, pg.K_d, pg.K_s, pg.K_a}
 
+
 class Engine:
     def __init__(self):
         self.game_items = {}
@@ -59,8 +60,7 @@ class Engine:
         EHandy.containers = self.ui_g, self.all_g
 
         # prepare map cell sprite
-        map = self._env.map
-        for cell in map.cells:
+        for cell in self._env.map.cells:
             self.cells.append(EMapCell(cell))
         EPlayerInfo(self._env.players[0])
         EHandy(self._env.players[0])
@@ -88,8 +88,13 @@ class Engine:
             self._process_key_for_move(event)
         elif key == pg.K_c:         # collect
             self._process_key_for_collect(event)
+        elif key == pg.K_r:
+            self._process_key_for_rest()
 
-    def _process_key_for_collect(self, event):
+    def _process_key_for_rest(self):
+        self._env.players[0].rest()
+
+    def _process_key_for_collect(self, _):
         self._env.players[0].receive_event(Collecting())
 
     def _process_key_for_move(self, event):
@@ -193,5 +198,3 @@ _engine = Engine()
 
 def get_engine():
     return _engine
-
-

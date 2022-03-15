@@ -16,7 +16,7 @@ class EHandy(pg.sprite.Sprite):
         super(EHandy, self).__init__(self.containers)
         self.game_obj = game_obj
         self.font = pg.font.Font(None, 20)
-        self.font.set_italic(1)
+        self.font.set_italic(True)
         self.text_color = pg.color.Color("white")
         self.gas = 1
         self.cell_width = 20 + self.gas
@@ -26,7 +26,7 @@ class EHandy(pg.sprite.Sprite):
                 for name, cfg in cfgs.items():
                     try:
                         self.item2images[name] = load_image(name + ".png")
-                    except Exception:
+                    except FileNotFoundError:
                         logging.error(f"Can't load image {name + '.png'}")
 
         self.image = pg.surface.Surface((120, 45))

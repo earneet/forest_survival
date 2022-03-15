@@ -6,6 +6,7 @@ import numpy as np
 from event import StopMove, MoveDown, MoveUp, MoveLeft, MoveRight, Attack, Collecting, Resting, CollectEnd, UseItem, \
     DropItem
 from items.item import Equip, Cloth, make_equip, make_cloth
+from map import Terrain
 from .player import MoveType, PlayerState, SlotType, get_vec_by_direction
 
 
@@ -249,6 +250,15 @@ class PlayerLogic:
     def damage_by(self, attacker, damage):
         return self.battle_logic.damage_by(attacker, damage)
 
+    def rest(self):
+        cell = self.player.env.map.get_cell_by_pos(self.player.position)
+        if cell and cell.type == Terrain.SELF_HOUSE:
+            self.on_leave_old_state()
+            self.player.state = PlayerState.RESTING
+            self.player.sub_state = None
+            return True
+        return False
+
     def un_equip(self, slot):
         pass
 
@@ -278,13 +288,13 @@ class PlayerLogic:
             # todo show error message box
             msg = f"try to use item at {item_idx} but there is no item"
             logging.warning(msg)
-            self.player.message.append(msg)
+            self.player.active_message.append(msg)
             return False
         if not isinstance(item, str):
             # todo show error message box
             msg = f" item {item_idx} is not a usable item"
             logging.warning(msg)
-            self.player.message.append(msg)
+            self.player.active_message.append(msg)
             return False
         from items import prop_cfg
         item_cfg = prop_cfg[item]
@@ -292,7 +302,7 @@ class PlayerLogic:
             # todo show error message box
             msg = f" item {item} is not usable"
             logging.warning(msg)
-            self.player.message.append(msg)
+            self.player.active_message.append(msg)
             return False
 
         tips = f"player {self.player.get_name()} use item {item} "
@@ -492,6 +502,8 @@ class PlayerLogic:
         if fells_temperature >= 30:
             energy_cost *= 2    # fells_temperature >= 30°， energy cost twice
         self.player.energy -= energy_cost
+        if self.player.energy < 0:
+            self.player.energy = 0
 
     def _process_natural_hunger_cost(self, state, sub_state):
         player, env = self.player, self.player.env

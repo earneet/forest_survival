@@ -22,6 +22,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         dir_msg = f"dir:   {self.game_obj.direction}"
         speed_msg = f"speed:   {self.game_obj.speed}"
         hunger_msg = f"hunger:   {self.game_obj.hunger}"
+        energy_msg = f"energy:   {self.game_obj.energy}"
 
         state_img = self.font.render(state_msg, True, self.color)
         sub_state_img = self.font.render(sub_state_msg, True, self.color)
@@ -29,6 +30,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         dir_img = self.font.render(dir_msg, True, self.color)
         speed_img = self.font.render(speed_msg, True, self.color)
         hunger_img = self.font.render(hunger_msg, True, self.color)
+        energy_img = self.font.render(energy_msg, True, self.color)
 
         self.image.fill(pg.color.Color("black"))
         total_height = 0
@@ -43,5 +45,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         self.image.blit(speed_img, (0, total_height))
         total_height += speed_img.get_height() + 1
         self.image.blit(hunger_img, (0, total_height))
+        total_height += hunger_img.get_height()
+        self.image.blit(energy_img, (0, total_height))
         total_height += hunger_img.get_height()
 
