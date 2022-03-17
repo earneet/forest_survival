@@ -23,6 +23,9 @@ class Plant(GameItem, abc.ABC):
     def species(self) -> str:
         return self._species
 
+    def get_name(self):
+        return self._species
+
     def collect(self, player, frame=None):
         if frame is None:
             frame = self.env.frames

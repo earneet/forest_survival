@@ -2,11 +2,15 @@ import sys
 
 import pygame as pg
 
-from event import MoveUp, MoveRight, MoveDown, MoveLeft, StopMove, Collecting
+from event import MoveUp, MoveRight, MoveDown, MoveLeft, StopMove, Collecting, Resting, Attack
 from .sprites.animal import EAnimal
+from .sprites.equipbag import EEquipBag
+from .sprites.homebox import EHomeBox
+from .sprites.maketable import EMakeTable
 from .sprites.handy import EHandy
 from .sprites.mapcell import EMapCell
 from .sprites.npc import ENpc
+from .sprites.opponentinfo import EOpponentInfo
 from .sprites.plant import EPlant
 from .sprites.playerinfo import EPlayerInfo
 
@@ -39,7 +43,7 @@ class Engine:
     def reset(self):
         pg.init()
         winstyle = 0
-        screenrect = pg.Rect(0, 0, 640, 480)
+        screenrect = pg.Rect(0, 0, 640, 500)
         bestdepth = pg.display.mode_ok(screenrect.size, winstyle, 32)
         self.screen = pg.display.set_mode(screenrect.size, winstyle, bestdepth)
         self.background = pg.surface.Surface(screenrect.size)
@@ -57,15 +61,41 @@ class Engine:
         EMapCell.containers = self.mapcells_g, self.all_g
         ENpc.containers = self.players_g, self.all_g
         EPlayerInfo.containers = self.all_g
+        EOpponentInfo.containers = self.all_g
         EHandy.containers = self.ui_g, self.all_g
+        EMakeTable.containers = self.ui_g, self.all_g
+        EEquipBag.containers = self.ui_g, self.all_g
+        EHomeBox.containers = self.ui_g, self.all_g
 
         # prepare map cell sprite
         for cell in self._env.map.cells:
             self.cells.append(EMapCell(cell))
         EPlayerInfo(self._env.players[0])
         EHandy(self._env.players[0])
-        # self.all_g.add()
-        # self.all_g.add()
+        EMakeTable(self._env.players[0])
+        EEquipBag(self._env.players[0])
+        EOpponentInfo(self._env.players[0])
+        EHomeBox(self._env.players[0])
+
+    def quit(self):
+        self.mapcells_g = None
+        self.players_g = None
+        self.animals_g = None
+        self.plants_g = None
+        self.all_g = None
+        pg.quit()
+
+    def update(self):
+        self._do_diff()
+        self.all_g.clear(self.screen, self.background)
+        self.all_g.update()
+        self.process_event()
+        self.render()
+        self.clock.tick(10)
+
+    @staticmethod
+    def get_instance():
+        return _engine
 
     def render(self):
         self.all_g.draw(self.screen)
@@ -84,15 +114,19 @@ class Engine:
 
     def _process_key_down(self, event):
         key = event.key
-        if key in move_buttons:     # move
+        if key in move_buttons:  # move
             self._process_key_for_move(event)
-        elif key == pg.K_c:         # collect
+        elif key == pg.K_c:  # collect
             self._process_key_for_collect(event)
-        elif key == pg.K_r:
+        elif key == pg.K_r:  # rest
             self._process_key_for_rest()
+        elif key == pg.K_t:
+            self._add_test_item()
+        elif key == pg.K_b:
+            self._env.players[0].receive_event(Attack())
 
     def _process_key_for_rest(self):
-        self._env.players[0].rest()
+        self._env.players[0].receive_event(Resting())
 
     def _process_key_for_collect(self, _):
         self._env.players[0].receive_event(Collecting())
@@ -120,26 +154,6 @@ class Engine:
     def _process_mouse_click(self, event, button):
         for sprite in self.ui_g:
             sprite.check_click(event.pos, button)
-
-    def quit(self):
-        self.mapcells_g = None
-        self.players_g = None
-        self.animals_g = None
-        self.plants_g = None
-        self.all_g = None
-        pg.quit()
-
-    def update(self):
-        self._do_diff()
-        self.all_g.clear(self.screen, self.background)
-        self.all_g.update()
-        self.process_event()
-        self.render()
-        self.clock.tick(10)
-
-    @staticmethod
-    def get_instance():
-        return _engine
 
     def _do_diff(self):
         new_plants, dumped_plants = self._find_diff_plants()
@@ -191,6 +205,17 @@ class Engine:
         pre_set = set([p.game_obj for p in pre])
         dumped = [p for p in pre if p.game_obj not in cur_set]
         return cur_set.difference(pre_set), dumped
+
+    def _add_test_item(self):
+        self._env.players[0].pickup({
+            "wool": 99,
+            "cotton": 99,
+        })
+
+        self._env.players[0].pickup({
+            "wool": 99,
+            "cotton": 99,
+        }, False)
 
 
 _engine = Engine()

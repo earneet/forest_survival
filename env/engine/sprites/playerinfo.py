@@ -11,7 +11,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         self.font = pg.font.Font(None, 20)
         self.font.set_italic(True)
         self.color = pg.color.Color("white")
-        self.image = pg.surface.Surface((100, 300))
+        self.image = pg.surface.Surface((200, 300))
         self.rect = self.image.get_rect().move(400, 0)
         self.update()
 
@@ -23,6 +23,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         speed_msg = f"speed:   {self.game_obj.speed}"
         hunger_msg = f"hunger:   {self.game_obj.hunger}"
         energy_msg = f"energy:   {self.game_obj.energy}"
+        temperature = f"temperature:    {self.game_obj.get_fells_temperature()}"
 
         state_img = self.font.render(state_msg, True, self.color)
         sub_state_img = self.font.render(sub_state_msg, True, self.color)
@@ -31,6 +32,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         speed_img = self.font.render(speed_msg, True, self.color)
         hunger_img = self.font.render(hunger_msg, True, self.color)
         energy_img = self.font.render(energy_msg, True, self.color)
+        temperature_img = self.font.render(temperature, True, self.color)
 
         self.image.fill(pg.color.Color("black"))
         total_height = 0
@@ -47,5 +49,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         self.image.blit(hunger_img, (0, total_height))
         total_height += hunger_img.get_height()
         self.image.blit(energy_img, (0, total_height))
-        total_height += hunger_img.get_height()
+        total_height += energy_img.get_height()
+        self.image.blit(temperature_img, (0, total_height))
+        total_height += temperature_img.get_height()
 

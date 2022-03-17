@@ -13,12 +13,12 @@ next(player_id)
 
 
 class PlayerState(Enum):
-    IDLE = 0        # 什么都没干
-    MOVING = 1      # 在移动
-    BATTLING = 2    # 在打架
+    IDLE = 0  # 什么都没干
+    MOVING = 1  # 在移动
+    BATTLING = 2  # 在打架
     COLLECTING = 3  # 在收集
-    RESTING = 4     # 在休整
-    MAKING = 5      # 在制造
+    RESTING = 4  # 在休整
+    MAKING = 5  # 在制造
 
 
 @enum.unique
@@ -50,6 +50,7 @@ Direction2Vec = {
     DirectionEnum.INVALID: np.array([0, 0])
 }
 
+
 def get_vec_by_direction(_dir):
     assert isinstance(_dir, DirectionEnum)
     return Direction2Vec[_dir]
@@ -71,28 +72,40 @@ class Player(GameItem):
         self.ai_logic = None
         self.state = PlayerState.IDLE
         self.sub_state = None
-        self.sub_state_stack = []           # used by mapcell logic, for resume pre sub_state when leave current cell
+        self.sub_state_stack = []  # used by mapcell logic, for resume pre sub_state when leave current cell
         self.interact_target = 0
-        self.friend_ship: Dict[int, int] = {}       # npc id 2 friendship value
-        self.handy_items: List[Tuple[object, int]] = [(None, 0) for _ in range(5)] # items id 2 count, slot max size is 5
-        self.home_items: List[Tuple[object, int]] = [(None, 0) for _ in range(5)] # items id 2 count , slot max size is 50
-        self.equips = [None, None]                  # equip slots, two slot, one for weapon, one for clothes
+        self.friend_ship: Dict[int, int] = {}  # npc id 2 friendship value
+        self.handy_items: List[Tuple[object, int]] = [(None, 0) for _ in
+                                                      range(5)]  # items id 2 count, slot max size is 5
+        self.home_items: List[Tuple[object, int]] = [(None, 0) for _ in
+                                                     range(5)]  # items id 2 count , slot max size is 50
+        self.equips = [None, None]  # equip slots, two slot, one for weapon, one for clothes
         self.energy = 100
-        self.hp_max = 100
+        self.energy_max = 100
         self.hunger = 10000
+        self.hunger_max = 10000
         self.hp = 50
+        self.hp_max = 100
         self.attack = 10
-        self.attack_frame = 0                       # attack settlement frame
+        self.attack_frame = 0  # attack settlement frame
+        self.make_frame = 0  # making settlement frame
         self.collect_frame = 0
-        self.position = np.array([0, 0])            # use numpy array to make compute handy
+        self.position = np.array([0, 0])  # use numpy array to make compute handy
         self.direction = DirectionEnum.UP
-        self.killer = None                          # who killed me
+        self.killer = None  # who killed me
         self.active_message = []
         self.passive_message = []
+        self.is_player = True
+        self.is_animal = False
+        self.is_plant = False
 
     @property
     def speed(self):
         return self._logic.get_player_move_speed()
+
+    @property
+    def frames(self):
+        return self.env.frames if self.env else 0
 
     def get_name(self):
         return "player_" + str(self.id)
@@ -117,12 +130,21 @@ class Player(GameItem):
                                         f'damage {real_damage} {"dead" if self.is_dead() else ""}')
         return real_damage
 
-    def find_interact_target(self):
-        return self._logic.find_interact_target()
+    def find_interact_target(self, interact_type="collecting"):
+        return self._logic.find_interact_target(interact_type)
 
     def on_new_day(self):
         if hasattr(self._logic, "on_new_day"):
             self._logic.on_new_day()
+
+    def handy2home(self, idx):
+        return self._logic.handy2home(idx)
+
+    def home2handy(self, idx):
+        return self._logic.home2handy(idx)
+
+    def in_home(self):
+        return self._logic.in_home()
 
     def un_equip(self, slot):
         self._logic.un_equip(slot)
@@ -136,8 +158,8 @@ class Player(GameItem):
     def make(self, item):
         self._logic.make(item)
 
-    def pickup(self, items):
-        self._logic.pickup(items)
+    def pickup(self, items, home_box=True):
+        self._logic.pickup(items, home_box)
 
     def rest(self):
         self._logic.rest()

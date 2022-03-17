@@ -3,7 +3,7 @@ import logging
 import pygame as pg
 
 from engine.utils import load_image
-from event import UseItem, DropItem
+from event import UseItem, DropItem, Exchange
 
 
 class EHandy(pg.sprite.Sprite):
@@ -61,4 +61,8 @@ class EHandy(pg.sprite.Sprite):
         if button == pg.BUTTON_LEFT:
             self.game_obj.receive_event(UseItem(idx))
         elif button == pg.BUTTON_RIGHT:
-            self.game_obj.receive_event(DropItem(idx))
+            if not self.game_obj.in_home():
+                self.game_obj.receive_event(DropItem(idx))
+            else:
+                self.game_obj.receive_event(Exchange(idx, False))
+        return True

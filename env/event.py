@@ -1,7 +1,5 @@
-
-
 class Event:
-    def __init__(self, name="", source=0, e_type=0,  *args):
+    def __init__(self, name="", source=0, e_type=0, *args):
         self._event = name
         self._source = source
         self._type = e_type
@@ -75,5 +73,24 @@ class DropItem(Event):
         self.idx = idx
 
 
+class MakeItem(Event):
+    def __init__(self, item):
+        super(MakeItem, self).__init__()
+        self.item = item
+
+
+class UnEquip(Event):
+    def __init__(self, idx):
+        super(UnEquip, self).__init__()
+        self.idx = idx
+
+
 class InputEvent(Event):
     pass
+
+
+class Exchange(Event):
+    def __init__(self, idx, direction):
+        super(Exchange, self).__init__()
+        self.idx = idx
+        self.dir = direction

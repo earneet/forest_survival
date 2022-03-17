@@ -85,7 +85,7 @@ TerrainTemperature = {
     Terrain.HOUSE: 0,
     Terrain.FOREST: 0,
     Terrain.LAWN: 0,
-    Terrain.RIVER:0
+    Terrain.RIVER: -5
 }
 
 

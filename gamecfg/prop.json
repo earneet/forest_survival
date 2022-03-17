@@ -38,5 +38,11 @@
     "effect": {
       "hp": 10
     }
+  },
+
+  "horn": {
+    "name": "horn",
+    "usable": false,
+    "effect": {}
   }
 }
