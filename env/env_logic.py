@@ -5,7 +5,7 @@ from typing import Dict, Callable
 import numpy as np
 
 from env.animals import new_animal
-from env.map.terrain import string2terrains
+from common.terrain import string2terrains
 from env.player import Player
 from env.map.map_config import map_cfg
 

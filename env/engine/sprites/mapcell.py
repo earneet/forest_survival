@@ -1,6 +1,6 @@
 import pygame as pg
 
-from env.map import Terrain
+from env.common import Terrain
 
 
 class EMapCell(pg.sprite.Sprite):

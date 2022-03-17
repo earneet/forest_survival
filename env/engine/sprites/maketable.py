@@ -3,7 +3,7 @@ from collections import OrderedDict
 import pygame as pg
 
 from env.engine.utils import load_image
-from env.player.event import MakeItem
+from common.event.event import MakeItem
 from env.items import equip_cfg, clothes_cfg
 
 

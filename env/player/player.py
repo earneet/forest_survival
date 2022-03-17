@@ -3,10 +3,10 @@ from typing import Dict, List, Tuple
 import itertools
 import numpy as np
 
-from env.player.event import Event
+from common.event.event import Event
 from env.player.player_config import player_cfg
 from env.player.player_logic import PlayerLogic
-from env.player.player_state import PlayerState, DirectionEnum
+from common.player_state import PlayerState, DirectionEnum
 
 player_id = itertools.count()
 next(player_id)
@@ -106,7 +106,8 @@ class Player:
         self._logic.drop(handy_idx)
 
     def make(self, item):
-        self._logic.make(item)
+        if item:
+            self._logic.make(item)
 
     def pickup(self, items, home_box=True):
         self._logic.pickup(items, home_box)

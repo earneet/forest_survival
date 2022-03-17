@@ -1,6 +1,7 @@
 import abc
 
-from env.player import MoveType, Player, PlayerState
+from env.common import MoveType, PlayerState
+from env.player import Player
 
 
 class MapLogicBase(abc.ABC):
@@ -68,5 +69,3 @@ class MapLogicHouse(MapLogicBase):
 
     def on_player_start_move(self, player):
         pass
-
-

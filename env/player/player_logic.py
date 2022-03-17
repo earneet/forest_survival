@@ -3,9 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 
-from env.player.event import *
+from common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
-from .player_state import MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
+from common import MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
 
 
 class PlayerMoveLogic:
@@ -320,7 +320,7 @@ class PlayerLogic:
 
     def rest(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
-        from map.terrain import Terrain
+        from common.terrain import Terrain
         if cell and cell.type == Terrain.SELF_HOUSE:
             self.on_leave_old_state()
             self.player.state = PlayerState.RESTING
@@ -545,7 +545,7 @@ class PlayerLogic:
     def _check_home(self) -> bool:
         env_map = self.player.env.map
         cell = env_map.get_cell_by_pos(self.player.position)
-        from env.map.terrain import Terrain
+        from common.terrain import Terrain
         return cell.type == Terrain.SELF_HOUSE
 
     def _put_common(self, item, cnt, home_box=True) -> bool:

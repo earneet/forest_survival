@@ -4,7 +4,8 @@ import numpy as np
 from munch import DefaultMunch
 from random import shuffle
 
-from . import MapCell, Terrain
+from env.common import Terrain
+from .import MapCell
 
 
 class Map:

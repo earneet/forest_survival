@@ -1,6 +1,6 @@
 import pygame as pg
 
-from env.player import PlayerState
+from env.common import PlayerState
 
 
 class EOpponentInfo(pg.sprite.Sprite):

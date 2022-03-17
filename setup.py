@@ -1,16 +1,27 @@
-# This is a sample Python script.
+#!/usr/bin/env python
+# encoding: utf-8
+# pip install wheel
+# python3 setup.py sdist bdist_wheel
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from setuptools import setup
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+setup(name="forest_survival",
+      version="0.1",
+      description="game env for ai experimental",
+      author="GongHuajun",
+      author_email="earneet@gmail.com",
+      packages=["forest_survival"],
+      license="MIT License",
+      python_requires=">=3.7",
+      classifiers=[
+          "Intended Audience :: Developers",
+          "Development Status :: 5 - Production/Stable",
+          "License :: OSI Approved :: MIT License",
+          "Programming Language :: Python :: 3.7",
+          "Programming Language :: Python :: 3.8",
+          "Programming Language :: Python :: 3.9",
+          "Programming Language :: Python :: 3.10",
+          "Topic :: Games/Entertainment",
+          "Topic :: Multimedia :: Graphics",
+          "Topic :: Software Development :: Libraries :: pygame"
+      ])

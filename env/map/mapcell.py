@@ -1,5 +1,5 @@
 
-from . import Terrain
+from env.common import Terrain
 from .mapcell_logic import MapLogicHouse, MapLogicCommon, MapLogicForest, MapLogicRiver
 
 Terrain2Logic = {

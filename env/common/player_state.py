@@ -13,13 +13,6 @@ class PlayerState(IntEnum):
     MAKING = 5  # 在制造
 
 
-@enum.unique
-class MoveType(IntEnum):
-    WALKING = 0
-    RUNNING = 1
-    SWIMMING = 2
-
-
 class SlotType(IntEnum):
     EQUIP = 0
     CLOTH = 1

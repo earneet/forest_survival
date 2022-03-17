@@ -2,7 +2,7 @@ import logging
 import random
 from typing import Dict
 
-from env.player.event import CollectEnd
+from common.event.event import CollectEnd
 
 
 class Plant:
