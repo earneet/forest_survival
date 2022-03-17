@@ -2,6 +2,11 @@ import random
 from typing import Dict
 
 
+class AnimalMoveLogic:
+    def __init__(self, animal, logic):
+        self.animal = animal
+        self.owner_logic = logic
+
 class AnimalLogic:
     def __init__(self, animal):
         self.animal = animal

@@ -28,14 +28,14 @@ class Cloth:
 
 
 def make_cloth(item_id) -> Cloth:
-    from items import clothes_cfg
+    from env.items import clothes_cfg
     cloth_cfg = clothes_cfg[item_id]
     if cloth_cfg:
         return Cloth(cloth_cfg)
 
 
 def make_equip(item_id) -> Equip:
-    from items import equip_cfg
+    from env.items import equip_cfg
     equip_cfg = equip_cfg[item_id]
     if equip_cfg:
         return Equip(equip_cfg)

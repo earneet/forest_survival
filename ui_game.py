@@ -1,5 +1,7 @@
 import logging
+import sys
 
+print(sys.path)
 from env import Env
 
 
@@ -10,6 +12,7 @@ if __name__ == "__main__":
     logging.debug("Starting ... ")
     env = Env(render=True)
     env.reset()
+    # env.render()
 
     logging.debug("Ready to go ... ")
     while True:

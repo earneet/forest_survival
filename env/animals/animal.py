@@ -1,11 +1,8 @@
-import abc
 import random
 from enum import Enum
 from typing import Dict
 
 import numpy as np
-
-from env.engine.gameitem import GameItem
 
 class AnimalState(Enum):
     IDLE = 0
@@ -13,7 +10,7 @@ class AnimalState(Enum):
     BATTLING = 2
 
 
-class Animal(GameItem, abc.ABC):
+class Animal:
 
     is_player = False
     is_animal = True
@@ -51,7 +48,7 @@ class Animal(GameItem, abc.ABC):
 
     @staticmethod
     def can_damage_by(attacker):
-        from player import Player
+        from env.player import Player
         return True if isinstance(attacker, Player) else False
 
     @property

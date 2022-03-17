@@ -1,6 +1,6 @@
 import pygame as pg
 
-from map import Terrain
+from env.map import Terrain
 
 
 class EMapCell(pg.sprite.Sprite):
@@ -11,7 +11,7 @@ class EMapCell(pg.sprite.Sprite):
         super().__init__(self.containers)
         self.game_obj = game_obj
 
-        from engine.utils import load_image
+        from env.engine.utils import load_image
         if not self.terrain2images:
             self.terrain2images = {
                 Terrain.FOREST: load_image("forest.png"),

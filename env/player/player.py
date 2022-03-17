@@ -1,71 +1,21 @@
-import enum
-from enum import Enum, IntEnum
 from typing import Dict, List, Tuple
 
-from env.engine.gameitem import GameItem
 import itertools
 import numpy as np
 
-from event import Event
+from env.player.event import Event
+from env.player.player_config import player_cfg
+from env.player.player_logic import PlayerLogic
+from env.player.player_state import PlayerState, DirectionEnum
 
 player_id = itertools.count()
 next(player_id)
 
 
-class PlayerState(Enum):
-    IDLE = 0  # 什么都没干
-    MOVING = 1  # 在移动
-    BATTLING = 2  # 在打架
-    COLLECTING = 3  # 在收集
-    RESTING = 4  # 在休整
-    MAKING = 5  # 在制造
-
-
-@enum.unique
-class MoveType(IntEnum):
-    WALKING = 0
-    RUNNING = 1
-    SWIMMING = 2
-
-
-class SlotType(IntEnum):
-    EQUIP = 0
-    CLOTH = 1
-
-
-@enum.unique
-class DirectionEnum(IntEnum):
-    INVALID = 0
-    UP = 1
-    RIGHT = 2
-    DOWN = 3
-    LEFT = 4
-
-
-Direction2Vec = {
-    DirectionEnum.UP: np.array([0, -1]),
-    DirectionEnum.RIGHT: np.array([1, 0]),
-    DirectionEnum.DOWN: np.array([0, 1]),
-    DirectionEnum.LEFT: np.array([-1, 0]),
-    DirectionEnum.INVALID: np.array([0, 0])
-}
-
-
-def get_vec_by_direction(_dir):
-    assert isinstance(_dir, DirectionEnum)
-    return Direction2Vec[_dir]
-
-
-WEAPON_SLOT = 0
-CLOTHES_SLOT = 1
-
-
-class Player(GameItem):
+class Player:
     def __init__(self, env):
-        super().__init__()
         self.id = next(player_id)
         self.env = env
-        from player import PlayerLogic
         self._logic = PlayerLogic(self)
         self.action = None
         self.events = []
@@ -80,13 +30,13 @@ class Player(GameItem):
         self.home_items: List[Tuple[object, int]] = [(None, 0) for _ in
                                                      range(5)]  # items id 2 count , slot max size is 50
         self.equips = [None, None]  # equip slots, two slot, one for weapon, one for clothes
-        self.energy = 100
-        self.energy_max = 100
-        self.hunger = 10000
-        self.hunger_max = 10000
-        self.hp = 50
-        self.hp_max = 100
-        self.attack = 10
+        self.energy = player_cfg.energy_init or player_cfg.energy_max
+        self.energy_max = player_cfg.energy_max
+        self.hunger = player_cfg.hunger_init or player_cfg.hunger_max
+        self.hunger_max = player_cfg.hunger_max
+        self.hp = player_cfg.hp_init
+        self.hp_max = player_cfg.hp_max
+        self.attack = player_cfg.attack
         self.attack_frame = 0  # attack settlement frame
         self.make_frame = 0  # making settlement frame
         self.collect_frame = 0

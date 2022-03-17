@@ -2,9 +2,9 @@ from collections import OrderedDict
 
 import pygame as pg
 
-from engine.utils import load_image
-from event import MakeItem
-from items import equip_cfg, clothes_cfg
+from env.engine.utils import load_image
+from env.player.event import MakeItem
+from env.items import equip_cfg, clothes_cfg
 
 
 class EMakeTable(pg.sprite.Sprite):

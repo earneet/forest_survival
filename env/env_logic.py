@@ -1,15 +1,13 @@
-import json
 import logging
-import os
 from queue import Queue
 from typing import Dict, Callable
 
 import numpy as np
 
-from animals import new_animal
-from map.terrain import string2terrains
-from player import Player
-from timer import FixedPeriodTimer
+from env.animals import new_animal
+from env.map.terrain import string2terrains
+from env.player import Player
+from env.map.map_config import map_cfg
 
 
 class EnvLogic:
@@ -30,20 +28,13 @@ class EnvLogic:
         env.MONTH_FRAMES = self.MONTH_FRAMES
 
     def reset(self):
-        timer = self._env.timer
-        timer.reset()
         self._reset_map()
         self._init_event_handlers()
-        self._add_default_timers()
         self._refresh_init()
 
     def _reset_map(self):
         env_map = self._env.map
-        root_dir = os.path.dirname(os.path.abspath("."))
-        cfg_path = os.path.join(root_dir, "gamecfg", "map.json")
-        with open(cfg_path) as f:
-            cfg = json.load(f)
-        env_map.reset(cfg)
+        env_map.reset(map_cfg)
 
     def _init_event_handlers(self):
         self._events_handlers[EnvLogic.EVENT_SECOND_ELAPSE] = self.on_second_elapse
@@ -68,11 +59,6 @@ class EnvLogic:
         self._update_timer(frames)
 
     def _update_timer(self, frames):
-        events = self._env.timer.tick()
-        if events:
-            for event in events:
-                self._events.put(event)
-
         if frames % self.FRAME_RATE == 0:
             self.on_second_elapse(frames // self.FRAME_RATE)
 
@@ -91,11 +77,6 @@ class EnvLogic:
             self.on_noon(day)
         elif day_residual == int(self.DAY_FRAMES * 0.75):
             self.on_sun_sink(day)
-
-    def _add_default_timers(self):
-        timers = []
-        timer = self._env.timer
-        timer.add_timer(FixedPeriodTimer(1.0, EnvLogic.EVENT_SECOND_ELAPSE))
 
     def _refresh_init(self):
         self._refresh_init_players()
@@ -121,7 +102,7 @@ class EnvLogic:
         self._refresh_animals()
 
     def _refresh_animals(self):
-        from animals import animal_cfg
+        from env.animals import animal_cfg
         residuals = {}
         for species, cfg in animal_cfg.items():
             residuals[species] = 0
@@ -140,7 +121,7 @@ class EnvLogic:
         self._refresh_plants()
 
     def _refresh_plants(self):
-        from plants import plant_cfg
+        from env.plants import plant_cfg
         residuals = {}
         for species, cfg in plant_cfg.items():
             residuals[species] = 0
@@ -164,7 +145,7 @@ class EnvLogic:
             self._env.animals.append(sp)
 
     def _refresh_plants_species(self, species, cells):
-        from plants import new_plant
+        from env.plants import new_plant
         for cell in cells:
             sp = new_plant(species, self._env)
             pos_x, pos_y = self._env.map.get_cell_center(cell)

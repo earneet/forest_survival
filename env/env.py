@@ -1,10 +1,8 @@
 from enum import IntEnum
 
-from engine import get_engine
-from env_logic import EnvLogic
-from map import Map
-from timer import TimerManager
-
+from .engine import get_engine
+from .env_logic import EnvLogic
+from .map import Map
 
 class Season(IntEnum):
     SPRING = 1
@@ -32,7 +30,6 @@ class Env:
 
     def __init__(self, render: bool = False):
         self.logic = EnvLogic(self)
-        self.timer = TimerManager()
         self.render = render
         self.season = Season.SPRING
         self.animals = []
@@ -87,4 +84,3 @@ class Env:
         for p in self.players:
             if p.id == pid:
                 return p
-

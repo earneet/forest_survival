@@ -2,7 +2,7 @@ import sys
 
 import pygame as pg
 
-from event import MoveUp, MoveRight, MoveDown, MoveLeft, StopMove, Collecting, Resting, Attack
+from env.player.event import *
 from .sprites.animal import EAnimal
 from .sprites.equipbag import EEquipBag
 from .sprites.homebox import EHomeBox

@@ -1,6 +1,4 @@
-
-from .player_logic import PlayerLogic
 from .player import PlayerState
-from .player import WEAPON_SLOT, CLOTHES_SLOT
+from .player_state import *
 from .player import Player
-from .player import MoveType
+from .player_config import player_cfg

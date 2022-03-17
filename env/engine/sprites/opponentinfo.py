@@ -1,5 +1,7 @@
 import pygame as pg
 
+from env.player import PlayerState
+
 
 class EOpponentInfo(pg.sprite.Sprite):
     containers = None
@@ -15,7 +17,6 @@ class EOpponentInfo(pg.sprite.Sprite):
 
     def update(self):
         self.image.fill("black")
-        from player import PlayerState
         if self.game_obj.state != PlayerState.BATTLING:
             return
 

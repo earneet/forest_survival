@@ -1,7 +1,8 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Terrain(Enum):
+class Terrain(IntEnum):
+    INVALID = 0
     SELF_HOUSE = 1  # npc house
     HOUSE = 2   # other npc's house
     FOREST = 3

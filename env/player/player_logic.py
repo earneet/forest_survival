@@ -3,11 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 
-from event import StopMove, MoveDown, MoveUp, MoveLeft, MoveRight, Attack, Collecting, Resting, CollectEnd, UseItem, \
-    DropItem, MakeItem, UnEquip, Exchange
-from items.item import Equip, Cloth, make_equip, make_cloth
-from map import Terrain
-from .player import MoveType, PlayerState, SlotType, get_vec_by_direction
+from env.player.event import *
+from env.items.item import Equip, Cloth, make_equip, make_cloth
+from .player_state import MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
 
 
 class PlayerMoveLogic:
@@ -33,7 +31,6 @@ class PlayerMoveLogic:
         tar_cell = env.map.get_cell_by_pos(tar_pos)
         if not tar_cell.player_can_move_in(player):
             self._move_to_edge(cur_cell)
-            from player import PlayerState
             player.state = PlayerState.IDLE
             player.sub_state = None
             return
@@ -47,13 +44,13 @@ class PlayerMoveLogic:
         env.get_global_temperature()
 
         # move type speed
-        from player import MoveType
+        from . import player_cfg
         if player.sub_state == MoveType.WALKING:
-            speed = 5 * env.STEP_BREAK
+            speed = player_cfg.speed_walk * env.STEP_BREAK
         elif player.sub_state == MoveType.RUNNING:
-            speed = 8 * env.STEP_BREAK
+            speed = player_cfg.speed_run * env.STEP_BREAK
         elif player.sub_state == MoveType.SWIMMING:
-            speed = 3 * env.STEP_BREAK
+            speed = player_cfg.speed_swim * env.STEP_BREAK
         else:
             return 0
 
@@ -76,7 +73,6 @@ class PlayerMoveLogic:
         self.on_leave_state()
 
     def process_event_move(self, event):
-        from player.player import DirectionEnum
         if self.player.state != PlayerState.MOVING:
             cell = self.player.env.map.get_cell_by_pos(self.player.position)
             self.owner_logic.on_leave_old_state()
@@ -101,7 +97,6 @@ class PlayerMoveLogic:
         player = self.player
         left, right, bottom, top = player.env.map.get_cell_edge(cell)
         direction = player.direction
-        from player.player import DirectionEnum
         pos = player.position
         if direction == DirectionEnum.UP:
             pos[1] = top
@@ -313,7 +308,6 @@ class PlayerLogic:
     def get_delta_temperature(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
         terrain_delta = cell.get_temperature_delta()
-        from player import CLOTHES_SLOT
         equipment = self.player.equips[CLOTHES_SLOT]
         equipment_delta = 0 if not equipment else equipment.get_temperature_delta()
         return terrain_delta + equipment_delta
@@ -326,6 +320,7 @@ class PlayerLogic:
 
     def rest(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
+        from map.terrain import Terrain
         if cell and cell.type == Terrain.SELF_HOUSE:
             self.on_leave_old_state()
             self.player.state = PlayerState.RESTING
@@ -361,7 +356,6 @@ class PlayerLogic:
         handy_item = self.player.handy_items[item_idx]
         item, cnt = handy_item[0], handy_item[1]
         if cnt <= 0:
-            # todo show error message box
             msg = f"try to use item at {item_idx} but there is no item"
             logging.warning(msg)
             self.player.active_message.append(msg)
@@ -369,10 +363,9 @@ class PlayerLogic:
         if isinstance(item, (Equip, Cloth)):
             return self.equip(item_idx)
 
-        from items import prop_cfg
+        from env.items import prop_cfg
         item_cfg = prop_cfg[item]
         if not item_cfg.usable:
-            # todo show error message box
             msg = f" item {item} is not usable"
             logging.warning(msg)
             self.player.active_message.append(msg)
@@ -390,9 +383,10 @@ class PlayerLogic:
         handy_item = self.player.handy_items[item_idx]
         item, cnt = handy_item[0], handy_item[1]
         if item is None or cnt <= 0:
+            logging.warning("there is no item to drop")
             return
         cnt -= 1
-        self.player.handy_items[item_idx] = (item, cnt - 1) if cnt > 1 else (None, 0)
+        self.player.handy_items[item_idx] = (item, cnt) if cnt > 1 else (None, 0)
 
     def find_interact_target(self, interact="collecting"):
         round_cells = self.player.env.map.get_round_cells_by_pos(self.player.position)
@@ -424,10 +418,10 @@ class PlayerLogic:
         assert isinstance(item, str)
         cfgs = None
         if item.endswith("_clothes"):
-            from items import clothes_cfg
+            from env.items import clothes_cfg
             cfgs = clothes_cfg
         elif item.endswith("_equip"):
-            from items import equip_cfg
+            from env.items import equip_cfg
             cfgs = equip_cfg
         cfg = cfgs[item]
         if cfg.recipe is None or not self._check_material(cfg.recipe.materials):
@@ -551,6 +545,7 @@ class PlayerLogic:
     def _check_home(self) -> bool:
         env_map = self.player.env.map
         cell = env_map.get_cell_by_pos(self.player.position)
+        from env.map.terrain import Terrain
         return cell.type == Terrain.SELF_HOUSE
 
     def _put_common(self, item, cnt, home_box=True) -> bool:
@@ -651,7 +646,6 @@ class PlayerLogic:
 
     def _process_natural_energy_cost(self, state, _):
         env = self.player.env
-        from player import PlayerState
         energy_cost = 0
         if state == PlayerState.RESTING:
             pass
@@ -669,7 +663,6 @@ class PlayerLogic:
 
     def _process_natural_hunger_cost(self, state, sub_state):
         player, env = self.player, self.player.env
-        from player import PlayerState
         cost = 1
         if state == PlayerState.MOVING:
             cost += self.MOVETYPE2HUNGERCOST[sub_state]

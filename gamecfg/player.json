@@ -3,6 +3,13 @@
   "speed_walk": 5,
   "speed_run": 8,
   "speed_swim": 3,
+  "attack": 10,
+  "hp_max": 10000,
+  "hp_init": 50,
+  "energy_max": 10000,
+  "energy_init": 10000,
+  "hunger_max": 10000,
+  "hunger_init": 10000,
   "run": {
     "allow_terrain": ["*"],
     "limit_terrain": ["forest"]

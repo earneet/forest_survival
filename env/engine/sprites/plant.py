@@ -1,6 +1,7 @@
 import pygame as pg
 
-from plants import plant_cfg
+from env.plants import plant_cfg
+from env.engine.utils import load_image
 
 
 class EPlant(pg.sprite.Sprite):
@@ -10,7 +11,6 @@ class EPlant(pg.sprite.Sprite):
     def __init__(self, game_obj):
         super(EPlant, self).__init__(self.containers)
         self.game_obj = game_obj
-        from engine.utils import load_image
         if not self.plants2image:
             for name in plant_cfg:
                 self.plants2image[name] = load_image(name+".png", -1)

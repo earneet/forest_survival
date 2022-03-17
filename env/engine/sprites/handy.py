@@ -2,8 +2,9 @@ import logging
 
 import pygame as pg
 
-from engine.utils import load_image
-from event import UseItem, DropItem, Exchange
+from env.engine.utils import load_image
+from env.player.event import UseItem, DropItem, Exchange
+from env.items import equip_cfg, clothes_cfg, prop_cfg
 
 
 class EHandy(pg.sprite.Sprite):
@@ -21,7 +22,6 @@ class EHandy(pg.sprite.Sprite):
         self.gas = 1
         self.cell_width = 20 + self.gas
         if not self.item2images:
-            from items import equip_cfg, clothes_cfg, prop_cfg
             for cfgs in [equip_cfg, clothes_cfg, prop_cfg]:
                 for name, cfg in cfgs.items():
                     try:

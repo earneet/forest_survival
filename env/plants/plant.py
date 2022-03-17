@@ -1,20 +1,18 @@
-import abc
 import logging
 import random
 from typing import Dict
 
-from env.engine.gameitem import GameItem
-from event import CollectEnd
+from env.player.event import CollectEnd
 
 
-class Plant(GameItem, abc.ABC):
+class Plant:
     def __init__(self, cfg, env):
         assert env is not None
         super().__init__()
         self.collectors = {}
         self.collector = None
         self.cfg = cfg
-        self.hp = 1     # all plants has a default hp value 1, when it be collected, change to 0
+        self.hp = 1  # all plants has a default hp value 1, when it be collected, change to 0
         self.position = [0, 0]
         self._species = cfg.species
         self.env = env
@@ -52,14 +50,15 @@ class Plant(GameItem, abc.ABC):
             break
 
         if self.hp == 0:
-            for p, f in self.collectors.items():
-                collector = self.env.get_player(p)
-                if collector is None or collector.is_dead():
-                    continue
-                collector.events.append(CollectEnd(self, collector))
+            self.on_collected()
 
-    def on_collected(self, player):
-        pass
+    def on_collected(self):
+        for p, f in self.collectors.items():
+            collector = self.env.get_player(p)
+            if collector is None or collector.is_dead():
+                continue
+            collector.events.append(CollectEnd(self, collector))
+        self.collectors = {}
 
     def drop(self) -> Dict[str, int]:
         drop_items = {}

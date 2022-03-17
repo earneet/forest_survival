@@ -2,9 +2,9 @@ import logging
 
 import pygame as pg
 
-from engine.utils import load_image
-from event import UnEquip
-from items import equip_cfg, clothes_cfg
+from env.engine.utils import load_image
+from env.player.event import UnEquip
+from env.items import equip_cfg, clothes_cfg
 
 
 class EEquipBag(pg.sprite.Sprite):
