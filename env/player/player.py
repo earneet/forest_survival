@@ -3,10 +3,10 @@ from typing import Dict, List, Tuple
 import itertools
 import numpy as np
 
-from common.event.event import Event
+from env.common.event.event import Event
 from env.player.player_config import player_cfg
 from env.player.player_logic import PlayerLogic
-from common.player_state import PlayerState, DirectionEnum
+from env.common import PlayerState, DirectionEnum
 
 player_id = itertools.count()
 next(player_id)
@@ -19,7 +19,6 @@ class Player:
         self._logic = PlayerLogic(self)
         self.action = None
         self.events = []
-        self.ai_logic = None
         self.state = PlayerState.IDLE
         self.sub_state = None
         self.sub_state_stack = []  # used by mapcell logic, for resume pre sub_state when leave current cell

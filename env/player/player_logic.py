@@ -3,9 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 
-from common.event.event import *
+from env.common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
-from common import MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
+from env.common import Terrain, MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
 
 
 class PlayerMoveLogic:
@@ -13,8 +13,9 @@ class PlayerMoveLogic:
         self.player = player
         self.owner_logic = logic
 
-    def on_enter_state(self, *args):
-        pass
+    def on_enter_state(self, *_):
+        self.owner_logic.on_leave_old_state()
+        self.owner_logic.cur_logic = self
 
     def on_leave_state(self, *_):
         self.player.state = PlayerState.IDLE
@@ -24,21 +25,21 @@ class PlayerMoveLogic:
     def update(self):
         player = self.player
         env = player.env
-        speed = self.get_player_move_speed()
+        speed = self.get_move_speed()
         cur_pos = player.position
         tar_pos = speed * get_vec_by_direction(player.direction) + cur_pos
         cur_cell = env.map.get_cell_by_pos(cur_pos)
         tar_cell = env.map.get_cell_by_pos(tar_pos)
-        if not tar_cell.player_can_move_in(player):
+        if not tar_cell.can_move_in(player):
             self._move_to_edge(cur_cell)
             player.state = PlayerState.IDLE
             player.sub_state = None
             return
         player.position = tar_pos
-        cur_cell.player_move_out(player)
-        tar_cell.player_move_in(player)
+        cur_cell.move_out(player)
+        tar_cell.move_in(player)
 
-    def get_player_move_speed(self):
+    def get_move_speed(self):
         player = self.player
         env = player.env
         env.get_global_temperature()
@@ -78,9 +79,8 @@ class PlayerMoveLogic:
             self.owner_logic.on_leave_old_state()
             self.player.state = PlayerState.MOVING
             self.player.sub_state = MoveType.RUNNING
-            self.owner_logic.cur_logic = self
             if hasattr(cell, "on_player_start_move"):
-                cell.on_player_start_move()
+                cell.on_start_move()
 
         if isinstance(event, MoveUp):
             self.player.direction = DirectionEnum.UP
@@ -92,6 +92,7 @@ class PlayerMoveLogic:
             self.player.direction = DirectionEnum.LEFT
         else:
             assert False, "invalid move event"
+        self.owner_logic.cur_logic = self
 
     def _move_to_edge(self, cell):
         player = self.player
@@ -151,7 +152,7 @@ class PlayerBattleLogic:
         if self.player.state == PlayerState.BATTLING:
             return
         target = self.player.find_interact_target("batting")
-        if target is None:
+        if target is None or target.is_dead():
             logging.warning("no interactive target found")
             return
         self.owner_logic.on_leave_old_state()
@@ -210,10 +211,14 @@ class PlayerMakeLogic:
         self.success_frame = int(
             self.making_cfg.recipe.time_consuming * self.player.env.HOUR_FRAMES) + self.player.frames
         self.player.state = PlayerState.MAKING
+        self.owner_logic.cur_logic = self
 
     def on_leave_state(self, *_):
         self.player.state = PlayerState.IDLE
         self.player.sub_state = None
+        target = self.player.interact_target
+        if target and not target.is_dead():
+            target.stop_collect(self.player)
         self.making_cfg = None
         self.owner_logic.cur_logic = None
         self.player.make_frame = 0
@@ -246,6 +251,30 @@ class PlayerRestingLogic:
         pass
 
 
+class PlayerCollectLogic:
+    def __init__(self, player, logic):
+        self.player = player
+        self.owner_logic = logic
+        self.target = None
+
+    def on_enter_state(self, target):
+        self.target = target
+        self.owner_logic.cur_logic = self
+        self.player.interact_target = target
+        self.player.state = PlayerState.COLLECTING
+        self.player.sub_state = None
+        self.target.collect(self.player)
+
+    def on_leave_state(self):
+        self.player.state = PlayerState.IDLE
+        if self.target and not self.target.is_dead():
+            self.target.stop_collect(self.player)
+        self.target = None
+
+    def update(self):
+        pass
+
+
 class PlayerLogic:
     MOVETYPE2HUNGERCOST = defaultdict(int)
     MOVETYPE2HUNGERCOST.update({
@@ -259,6 +288,7 @@ class PlayerLogic:
         self.move_logic = PlayerMoveLogic(player, self)
         self.battle_logic = PlayerBattleLogic(player, self)
         self.make_logic = PlayerMakeLogic(player, self)
+        self.collect_logic = PlayerCollectLogic(player, self)
         self.cur_logic = None
 
     def update(self):
@@ -283,14 +313,12 @@ class PlayerLogic:
         self.player.energy = min(self.player.energy, self.player.energy_max)
         self.player.energy = max(self.player.energy, 0)
 
-        if player.ai_logic:
-            player.ai_logic.update()
         self._process_new_event()
 
     def on_leave_old_state(self):
         state = self.player.state
         if self.cur_logic:
-            self.cur_logic.on_enter_state()
+            self.cur_logic.on_leave_state()
             return
         if state == PlayerState.COLLECTING:
             self.player.interact_target = None
@@ -320,7 +348,6 @@ class PlayerLogic:
 
     def rest(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
-        from common.terrain import Terrain
         if cell and cell.type == Terrain.SELF_HOUSE:
             self.on_leave_old_state()
             self.player.state = PlayerState.RESTING
@@ -390,16 +417,16 @@ class PlayerLogic:
 
     def find_interact_target(self, interact="collecting"):
         round_cells = self.player.env.map.get_round_cells_by_pos(self.player.position)
-        interactables = []
+        interactive = []
         for cell in round_cells:
             if interact == "collecting":
-                interactables.extend(cell.plants)
+                interactive.extend(cell.plants)
             elif interact == "batting":
-                interactables.extend(cell.animals)
-                interactables.extend(filter(lambda x: x != self.player, cell.players))
+                interactive.extend(cell.animals)
+                interactive.extend(filter(lambda x: x != self.player, cell.players))
         self_pos = self.player.position
-        interactables.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
-        return interactables[0] if interactables else None
+        interactive.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
+        return interactive[0] if interactive else None
 
     def pickup(self, items, home_box=True):
         for item, cnt in items.items():
@@ -437,10 +464,10 @@ class PlayerLogic:
         self.on_leave_old_state()
         self.cur_logic = self.make_logic
         self.cur_logic.on_enter_state(cfg)
-        return True  # all other prop don't need be make
+        return True  # all other prop don't need to be make
 
     def get_player_move_speed(self):
-        return self.move_logic.get_player_move_speed()
+        return self.move_logic.get_move_speed()
 
     def _check_handy_space(self, n):
         for item in self.player.handy_items:
@@ -488,6 +515,8 @@ class PlayerLogic:
         return True
 
     def put_handy(self, item, cnt=1, home_box=True) -> bool:
+        if cnt == 0:
+            return True
         assert cnt > 0, "cnt must greate than 0"
         if isinstance(item, str):
             return self._put_common(item, cnt, home_box)
@@ -545,22 +574,21 @@ class PlayerLogic:
     def _check_home(self) -> bool:
         env_map = self.player.env.map
         cell = env_map.get_cell_by_pos(self.player.position)
-        from common.terrain import Terrain
         return cell.type == Terrain.SELF_HOUSE
 
-    def _put_common(self, item, cnt, home_box=True) -> bool:
+    def _put_common(self, item_name, cnt, home_box=True) -> bool:
         remain = cnt
         # first pile up to save space
         handy_items = self.player.handy_items if home_box else self.player.home_items
         for i in range(len(handy_items)):
             zone = handy_items[i]
-            if zone[0] == item:
+            if zone[0] == item_name:
                 capacity = 99 - zone[1]
                 putin_num = min(cnt, capacity)
-                newzone = (zone[0], zone[1] + putin_num)
-                handy_items[i] = newzone
+                item = (zone[0], zone[1] + putin_num)
+                handy_items[i] = item
                 remain -= putin_num
-                logging.info(f" put {item} count {putin_num}")
+                logging.info(f" put {item_name} count {putin_num}")
                 if remain == 0:
                     return True
 
@@ -570,10 +598,10 @@ class PlayerLogic:
                 zone = handy_items[i]
                 if zone[0] is None or zone[1] == 0:
                     putin_num = min(99, remain)
-                    newzone = (item, putin_num)
-                    handy_items[i] = newzone
+                    item = (item_name, putin_num)
+                    handy_items[i] = item
                     remain -= putin_num
-                    logging.info(f" put {item} count {putin_num}")
+                    logging.info(f" put {item_name} count {putin_num}")
                     if remain == 0:
                         return True
 
@@ -582,8 +610,7 @@ class PlayerLogic:
         for i in range(len(handy_items)):
             zone = handy_items[i]
             if zone[0] is None or zone[1] == 0:
-                newzone = (item, 1)
-                handy_items[i] = newzone
+                handy_items[i] = (item, 1)
                 return True
         return False
 
@@ -620,10 +647,7 @@ class PlayerLogic:
             logging.warning("can't find any collectable target")
             return
         self.on_leave_old_state()
-        target.collect(self.player)
-        self.player.interact_target = target
-        self.player.state = PlayerState.COLLECTING
-        self.player.sub_state = None
+        self.collect_logic.on_enter_state(target)
 
     def _process_event_collecting(self, event: Collecting):
         if isinstance(event, Collecting):

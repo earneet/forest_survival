@@ -7,11 +7,14 @@
     "attribute": {
       "hp": 20,
       "attack": 5,
-      "speed": 1,
+      "speed": 10,
       "cost": 0
     },
     "strategy": {
-
+      "move": {
+        "move_interval": [3 ,5],
+        "distance": [0, 30]
+      }
     },
     "rule": {
 
@@ -33,7 +36,10 @@
       "cost": 0
     },
     "strategy": {
-
+      "move": {
+        "move_interval": [3 ,5],
+        "distance": [0, 30]
+      }
     },
     "rule": {
 
@@ -55,7 +61,10 @@
       "cost": 0
     },
     "strategy": {
-
+      "move": {
+        "move_interval": [3 ,5],
+        "distance": [0, 30]
+      }
     },
     "rule": {
 
@@ -72,11 +81,14 @@
     "attribute": {
       "hp": 5,
       "attack": 0,
-      "speed": 2,
+      "speed": 0,
       "cost": 0
     },
     "strategy": {
-
+      "move": {
+        "move_interval": [3 ,5],
+        "distance": [0, 30]
+      }
     },
     "rule": {
 

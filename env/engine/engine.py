@@ -2,7 +2,7 @@ import sys
 
 import pygame as pg
 
-from common.event.event import *
+from env.common.event.event import *
 from .sprites.animal import EAnimal
 from .sprites.equipbag import EEquipBag
 from .sprites.homebox import EHomeBox

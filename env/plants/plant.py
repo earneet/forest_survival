@@ -2,7 +2,7 @@ import logging
 import random
 from typing import Dict
 
-from common.event.event import CollectEnd
+from env.common.event.event import CollectEnd
 
 
 class Plant:
@@ -31,6 +31,9 @@ class Plant:
 
     def stop_collect(self, player):
         del self.collectors[player.id]
+
+    def is_dead(self):
+        return self.hp <= 0
 
     def update(self):
         if not self.collectors:

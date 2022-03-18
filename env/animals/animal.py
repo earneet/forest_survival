@@ -1,13 +1,10 @@
 import random
-from enum import Enum
 from typing import Dict
 
 import numpy as np
 
-class AnimalState(Enum):
-    IDLE = 0
-    MOVING = 1
-    BATTLING = 2
+from env.common.animal_state import AnimalState
+from env.common.direction import DirectionEnum
 
 
 class Animal:
@@ -22,7 +19,10 @@ class Animal:
         self.cfg = cfg
         self.env = env
         self.hp = int(cfg.attribute.hp)
+        self.speed = float(cfg.attribute.speed)
+        self.attack = float(cfg.attribute.attack)
         self.position = np.array([0, 0])
+        self.direction = DirectionEnum.UP
         self.move_speed = int(cfg.attribute.speed)
         self.ai_instance = None
         self._species = cfg.species
@@ -32,9 +32,15 @@ class Animal:
         self.attack_frame = 0                       # attack settlement frame
         self.damage_table = {}
         self.events = []
+        self.last_move_frame = 0
+        self.next_move_frame = 0
 
     def get_name(self):
         return self._species
+
+    @property
+    def frames(self):
+        return self.env.frames
 
     def update(self):
         if self._logic:

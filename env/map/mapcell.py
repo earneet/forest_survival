@@ -1,6 +1,9 @@
+import logging
 
 from env.common import Terrain
 from .mapcell_logic import MapLogicHouse, MapLogicCommon, MapLogicForest, MapLogicRiver
+from ..animals import Animal
+from ..player import Player
 
 Terrain2Logic = {
     Terrain.SELF_HOUSE: MapLogicHouse,
@@ -35,20 +38,30 @@ class MapCell:
     def spawn_animal(self, animal):
         self.animals.append(animal)
 
-    def player_can_move_in(self, player):
-        return self._logic.can_move_in(player)
+    def can_move_in(self, game_obj):
+        return self._logic.can_move_in(game_obj)
 
-    def player_move_out(self, player):
-        return self._logic.on_player_move_out(player)
+    def move_out(self, game_obj):
+        container = None
+        if isinstance(game_obj, Player):
+            container = self.players
+        elif isinstance(game_obj, Animal):
+            container = self.animals
+        if game_obj not in container:
+            logging.warning("Bug Happend, to solved this")
+        else:
+            container.remove(game_obj)
+        return self._logic.on_move_out(game_obj)
 
     def get_temperature_delta(self):
         return TerrainTemperature[self.type]
 
-    def player_move_in(self, player):
-        if player in self.players:
-            return
-        self.players.append(player)
-        self._logic.on_player_move_in(player)
+    def move_in(self, game_obj):
+        if isinstance(game_obj, Player):
+            self.players.append(game_obj)
+        elif isinstance(game_obj, Animal):
+            self.animals.append(game_obj)
+        self._logic.on_move_in(game_obj)
 
     def is_empty(self):
         return not (self.plants or self.animals or self.players)

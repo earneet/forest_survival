@@ -3,7 +3,7 @@ import logging
 import pygame as pg
 
 from env.engine.utils import load_image
-from common.event.event import UseItem, DropItem, Exchange
+from env.common.event.event import UseItem, DropItem, Exchange
 from env.items import equip_cfg, clothes_cfg, prop_cfg
 
 

@@ -1,11 +1,10 @@
 import logging
 from queue import Queue
-from typing import Dict, Callable
 
 import numpy as np
 
 from env.animals import new_animal
-from common.terrain import string2terrains
+from env.common.terrain import string2terrains
 from env.player import Player
 from env.map.map_config import map_cfg
 
@@ -16,7 +15,6 @@ class EnvLogic:
     def __init__(self, env, frame_rate=10):
         self._env = env
         self._events: Queue = Queue()
-        self._events_handlers: Dict[str, Callable] = {}
         self.FRAME_RATE = frame_rate
         self.HOUR_FRAMES = self.FRAME_RATE * env.HOUR_SECOND_RATIO
         self.DAY_FRAMES = self.HOUR_FRAMES * env.DAY_HOUR_RATIO
@@ -29,15 +27,11 @@ class EnvLogic:
 
     def reset(self):
         self._reset_map()
-        self._init_event_handlers()
         self._refresh_init()
 
     def _reset_map(self):
         env_map = self._env.map
         env_map.reset(map_cfg)
-
-    def _init_event_handlers(self):
-        self._events_handlers[EnvLogic.EVENT_SECOND_ELAPSE] = self.on_second_elapse
 
     def update(self):
         # first update timer
@@ -62,7 +56,7 @@ class EnvLogic:
         if frames % self.FRAME_RATE == 0:
             self.on_second_elapse(frames // self.FRAME_RATE)
 
-        day, day_residual, day_change = frames//self.DAY_FRAMES, frames % self.DAY_FRAMES, frames % self.DAY_FRAMES == 0
+        day, day_residual, day_change = frames // self.DAY_FRAMES, frames % self.DAY_FRAMES, frames % self.DAY_FRAMES == 0
         if day_change:
             month, month_change = day // 30, day % 30 == 0
             if month_change:
@@ -84,18 +78,18 @@ class EnvLogic:
         self._refresh_init_plants()
 
     def _refresh_init_players(self):
-        map = self._env.map
+        env_map = self._env.map
         self._env.players = []
-        cells = map.select_cells(string2terrains("SELF_HOUSE"))
+        cells = env_map.select_cells(string2terrains("SELF_HOUSE"))
         for cell in cells:
             y = cell.y
             x = cell.x
             player = Player(self._env)
-            player.position = ((x + 0.5) * map.cell_size, (y + 0.5) * map.cell_size)
+            player.position = ((x + 0.5) * env_map.cell_size, (y + 0.5) * env_map.cell_size)
             logging.warning(f"spawn a {player.get_name()} at cell {cell.x},{cell.y}, "
                             f"position ({player.position[0]},{player.position[1]})")
             self._env.players.append(player)
-            cell.player_move_in(player)
+            cell.move_in(player)
 
     def _refresh_init_animals(self):
         self._env.animals = []
@@ -114,7 +108,7 @@ class EnvLogic:
         for species, cfg in animal_cfg.items():
             need_cnt = cfg["init_count"] - residuals[species]
             cells = self._env.map.select_cells(string2terrains(cfg["terrains"]), size=need_cnt)
-            self._refresh_animals_species(species, cfg, cells)
+            self._refresh_animals_species(species, cells)
 
     def _refresh_init_plants(self):
         self._env.plants = []
@@ -134,7 +128,7 @@ class EnvLogic:
             cells = self._env.map.select_cells(string2terrains(cfg.terrains), size=need_cnt)
             self._refresh_plants_species(species, cells)
 
-    def _refresh_animals_species(self, species, cfg, cells):
+    def _refresh_animals_species(self, species, cells):
         for cell in cells:
             sp = new_animal(species, self._env)
             pos_x, pos_y = self._env.map.get_cell_center(cell)
@@ -155,7 +149,7 @@ class EnvLogic:
                          f"position ({pos_x},{pos_y})")
             self._env.plants.append(sp)
 
-    def on_new_day(self, new_day):
+    def on_new_day(self, _):
         for player in self._env.players:
             player.on_new_day()
         self._refresh_animals()
@@ -176,7 +170,7 @@ class EnvLogic:
         logging.debug(msg)
         self._env.message.append(msg)
 
-    def on_second_elapse(self, event):
+    def on_second_elapse(self, _):
         assert self is not None
         # logging.debug(f"second elapse ... {event}")
 
@@ -185,4 +179,3 @@ class EnvLogic:
         msg = f" a new season begin ... season {new_season}"
         logging.debug(msg)
         self._env.message.append(msg)
-

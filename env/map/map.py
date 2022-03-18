@@ -26,8 +26,8 @@ class Map:
             return list(filter(lambda c: c.type in terrains, cells))[:size]
 
     def get_cell(self, x, y):
-        assert x >= 0 and y >= 0, "x, y should greater or equals to 0"
-        assert x < self.cell_x and y < self.cell_y, "x, y should be limit"
+        if x < 0 or y < 0 or x >= self.cell_x or y >= self.cell_y:
+            return None
         return self.cells[y * self.cell_x + x]
 
     def pos_2_xy(self, pos):
