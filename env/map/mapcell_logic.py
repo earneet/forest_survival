@@ -9,8 +9,9 @@ class MapLogicBase(abc.ABC):
         self.cell = cell
 
     def can_move_in(self, game_obj):
-        assert game_obj is not None
-        return True
+        if isinstance(game_obj, Player):
+            return True
+        return game_obj.can_move_in(self.cell.type)
 
     def on_move_in(self, game_obj):
         if not isinstance(game_obj, Player):

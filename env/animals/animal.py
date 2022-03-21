@@ -5,6 +5,7 @@ import numpy as np
 
 from env.common.animal_state import AnimalState
 from env.common.direction import DirectionEnum
+from env.common.terrain import string2terrains
 
 
 class Animal:
@@ -24,6 +25,7 @@ class Animal:
         self.position = np.array([0, 0])
         self.direction = DirectionEnum.UP
         self.move_speed = int(cfg.attribute.speed)
+        self.terrains = []
         self.ai_instance = None
         self._species = cfg.species
         self._logic = None
@@ -34,6 +36,10 @@ class Animal:
         self.events = []
         self.last_move_frame = 0
         self.next_move_frame = 0
+        for terrain_name in self.cfg.terrains:
+            terrain = string2terrains(terrain_name)
+            if terrain:
+                self.terrains.append(terrain)
 
     def get_name(self):
         return self._species
@@ -51,6 +57,12 @@ class Animal:
 
     def is_dead(self):
         return self.hp <= 0
+
+    def can_move_in(self, terrain):
+        from env.map import MapCell
+        if isinstance(terrain, MapCell):
+            terrain = terrain.type
+        return terrain in self.terrains
 
     @staticmethod
     def can_damage_by(attacker):

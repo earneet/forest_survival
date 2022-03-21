@@ -36,6 +36,7 @@ class Player:
         self.hp = player_cfg.hp_init
         self.hp_max = player_cfg.hp_max
         self.attack = player_cfg.attack
+        self.attack_range = int(player_cfg.attack_range)
         self.attack_frame = 0  # attack settlement frame
         self.make_frame = 0  # making settlement frame
         self.collect_frame = 0

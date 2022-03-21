@@ -1,3 +1,4 @@
+import abc
 import logging
 from collections import defaultdict
 
@@ -7,20 +8,44 @@ from env.common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
 from env.common import Terrain, MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
 
-
-class PlayerMoveLogic:
-    def __init__(self, player, logic):
+class PlayerConcreteLogic(abc.ABC):
+    def __init__(self, player, parent_logic):
         self.player = player
-        self.owner_logic = logic
+        self.parent_logic = parent_logic
+
+    def can_enter_state(self, *_) -> bool:
+        return True
 
     def on_enter_state(self, *_):
-        self.owner_logic.on_leave_old_state()
-        self.owner_logic.cur_logic = self
+        pass
+
+    def on_leave_state(self, *_):
+        pass
+
+    def update(self):
+        pass
+
+
+class PlayerMoveLogic(PlayerConcreteLogic):
+    event2direction = {
+        MoveUp: DirectionEnum.UP,
+        MoveRight: DirectionEnum.RIGHT,
+        MoveDown: DirectionEnum.DOWN,
+        MoveLeft: DirectionEnum.LEFT
+    }
+
+    def __init__(self, player, logic):
+        super(PlayerMoveLogic, self).__init__(player, logic)
+
+    def on_enter_state(self, move_type, direction):
+        self.player.state = PlayerState.MOVING
+        self.player.sub_state = move_type
+        self.player.direction = direction
 
     def on_leave_state(self, *_):
         self.player.state = PlayerState.IDLE
         self.player.sub_state = None
-        self.owner_logic.cur_logic = None
+        self.parent_logic.cur_logic = None
 
     def update(self):
         player = self.player
@@ -71,28 +96,15 @@ class PlayerMoveLogic:
     def process_event_stop(self, _):
         if self.player.state != PlayerState.MOVING:
             return
-        self.on_leave_state()
+        self.parent_logic.switch_state(self.parent_logic.idle_logic)
 
     def process_event_move(self, event):
         if self.player.state != PlayerState.MOVING:
             cell = self.player.env.map.get_cell_by_pos(self.player.position)
-            self.owner_logic.on_leave_old_state()
-            self.player.state = PlayerState.MOVING
-            self.player.sub_state = MoveType.RUNNING
+            direction = self.event2direction[event.__class__]
+            self.parent_logic.switch_state(self, MoveType.RUNNING, direction)
             if hasattr(cell, "on_player_start_move"):
                 cell.on_start_move()
-
-        if isinstance(event, MoveUp):
-            self.player.direction = DirectionEnum.UP
-        elif isinstance(event, MoveRight):
-            self.player.direction = DirectionEnum.RIGHT
-        elif isinstance(event, MoveDown):
-            self.player.direction = DirectionEnum.DOWN
-        elif isinstance(event, MoveLeft):
-            self.player.direction = DirectionEnum.LEFT
-        else:
-            assert False, "invalid move event"
-        self.owner_logic.cur_logic = self
 
     def _move_to_edge(self, cell):
         player = self.player
@@ -110,14 +122,13 @@ class PlayerMoveLogic:
         player.position = pos
 
 
-class PlayerBattleLogic:
+class PlayerBattleLogic(PlayerConcreteLogic):
     def __init__(self, player, logic):
-        self.player = player
-        self.owner_logic = logic
+        super(PlayerBattleLogic, self).__init__(player, logic)
 
-    def on_enter_state(self, *_):
-        self.player.attack_frame = self.player.env.frames
-        self.owner_logic.cur_logic = self
+    def on_enter_state(self, *, frames, target):
+        self.player.attack_frame = frames
+        self.player.interact_target = target
 
     def on_leave_state(self, *_):
         self.player.interact_target = None
@@ -155,11 +166,7 @@ class PlayerBattleLogic:
         if target is None or target.is_dead():
             logging.warning("no interactive target found")
             return
-        self.owner_logic.on_leave_old_state()
-        self.player.state = PlayerState.BATTLING
-        self.player.attack_frame = self.player.env.frames
-        self.player.interact_target = target
-        self.on_enter_state()
+        self.parent_logic.switch_state(self, self.player.env.frames, target)
 
     def can_damage_by(self, attacker):
         return self.player != attacker
@@ -190,10 +197,9 @@ class PlayerBattleLogic:
         return damage
 
 
-class PlayerMakeLogic:
+class PlayerMakeLogic(PlayerConcreteLogic):
     def __init__(self, player, logic):
-        self.player = player
-        self.owner_logic = logic
+        super(PlayerMakeLogic, self).__init__(player, logic)
         self.making_cfg = None
         self.success_frame = None
 
@@ -211,7 +217,7 @@ class PlayerMakeLogic:
         self.success_frame = int(
             self.making_cfg.recipe.time_consuming * self.player.env.HOUR_FRAMES) + self.player.frames
         self.player.state = PlayerState.MAKING
-        self.owner_logic.cur_logic = self
+        self.parent_logic.cur_logic = self
 
     def on_leave_state(self, *_):
         self.player.state = PlayerState.IDLE
@@ -220,7 +226,7 @@ class PlayerMakeLogic:
         if target and not target.is_dead():
             target.stop_collect(self.player)
         self.making_cfg = None
-        self.owner_logic.cur_logic = None
+        self.parent_logic.cur_logic = None
         self.player.make_frame = 0
 
     def _make(self, item, cfg) -> bool:
@@ -230,16 +236,16 @@ class PlayerMakeLogic:
         elif item.endswith("_equip"):
             production = make_equip(item)
         if production:
-            self.owner_logic.remove_cost(cfg.recipe.materials)
-            self.owner_logic.put_handy(production)
+            self.parent_logic.remove_cost(cfg.recipe.materials)
+            self.parent_logic.put_handy(production)
             return True
         return False
 
 
-class PlayerRestingLogic:
+class PlayerRestingLogic(PlayerConcreteLogic):
     def __init__(self, player, logic):
-        self.player = player
-        self.owner_logic = logic
+        super(PlayerRestingLogic, self).__init__(player, logic)
+        self.parent_logic = logic
 
     def update(self):
         pass
@@ -251,15 +257,14 @@ class PlayerRestingLogic:
         pass
 
 
-class PlayerCollectLogic:
+class PlayerCollectLogic(PlayerConcreteLogic):
     def __init__(self, player, logic):
-        self.player = player
-        self.owner_logic = logic
+        super(PlayerCollectLogic, self).__init__(player, logic)
         self.target = None
 
     def on_enter_state(self, target):
         self.target = target
-        self.owner_logic.cur_logic = self
+        self.parent_logic.cur_logic = self
         self.player.interact_target = target
         self.player.state = PlayerState.COLLECTING
         self.player.sub_state = None
@@ -273,6 +278,10 @@ class PlayerCollectLogic:
 
     def update(self):
         pass
+
+class PlayerIdleLogic(PlayerConcreteLogic):
+    def __init__(self, player, logic):
+        super(PlayerIdleLogic, self).__init__(player, logic)
 
 
 class PlayerLogic:
@@ -289,6 +298,8 @@ class PlayerLogic:
         self.battle_logic = PlayerBattleLogic(player, self)
         self.make_logic = PlayerMakeLogic(player, self)
         self.collect_logic = PlayerCollectLogic(player, self)
+        self.rest_logic = PlayerRestingLogic(player, self)
+        self.idle_logic = PlayerIdleLogic(player, self)
         self.cur_logic = None
 
     def update(self):
@@ -315,17 +326,22 @@ class PlayerLogic:
 
         self._process_new_event()
 
-    def on_leave_old_state(self):
-        state = self.player.state
+    def switch_state(self, new_state, *args):
+        """
+        this is an unenabled state switch function
+
+        Args:
+            new_state: new state logic object
+            *args:  additional args
+
+        Returns:
+
+        """
         if self.cur_logic:
             self.cur_logic.on_leave_state()
-            return
-        if state == PlayerState.COLLECTING:
-            self.player.interact_target = None
-        elif state == PlayerState.MOVING:
-            self.move_logic.on_leave_state()
-        elif state == PlayerState.IDLE:
-            pass
+        if new_state.can_enter_state():
+            self.cur_logic = new_state
+            self.cur_logic.on_enter_state(*args)
 
     def dead_update(self):
         pass
@@ -349,9 +365,7 @@ class PlayerLogic:
     def rest(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
         if cell and cell.type == Terrain.SELF_HOUSE:
-            self.on_leave_old_state()
-            self.player.state = PlayerState.RESTING
-            self.player.sub_state = None
+            self.switch_state(self.rest_logic)
             return True
         return False
 
@@ -426,7 +440,8 @@ class PlayerLogic:
                 interactive.extend(filter(lambda x: x != self.player, cell.players))
         self_pos = self.player.position
         interactive.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
-        return interactive[0] if interactive else None
+        return interactive[0] if interactive and np.linalg.norm(
+            interactive[0].position - self_pos) <= self.player.attack_range else None
 
     def pickup(self, items, home_box=True):
         for item, cnt in items.items():
@@ -461,9 +476,7 @@ class PlayerLogic:
             self.player.active_message.append(
                 f"try to make a {item} but have no enough bag space for make a {item}")
             return False
-        self.on_leave_old_state()
-        self.cur_logic = self.make_logic
-        self.cur_logic.on_enter_state(cfg)
+        self.switch_state(self.make_logic)
         return True  # all other prop don't need to be make
 
     def get_player_move_speed(self):
@@ -646,16 +659,13 @@ class PlayerLogic:
         if not target:  # can't find any collectable target
             logging.warning("can't find any collectable target")
             return
-        self.on_leave_old_state()
-        self.collect_logic.on_enter_state(target)
+        self.switch_state(self.collect_logic)
 
     def _process_event_collecting(self, event: Collecting):
         if isinstance(event, Collecting):
             self.collect()
         elif isinstance(event, CollectEnd):
-            self.on_leave_old_state()
-            self.player.state = PlayerState.IDLE
-            self.player.sub_state = None
+            self.switch_state(self.idle_logic)
 
     def _process_natural_recover(self):
         hunger = self.player.hunger

@@ -4,6 +4,7 @@
   "speed_run": 8,
   "speed_swim": 3,
   "attack": 10,
+  "attack_range": 20,
   "hp_max": 10000,
   "hp_init": 50,
   "energy_max": 10000,
