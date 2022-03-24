@@ -1,5 +1,6 @@
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 
+import math
 import numpy as np
 from munch import DefaultMunch
 from random import shuffle
@@ -33,7 +34,7 @@ class Map:
     def pos_2_xy(self, pos):
         assert (isinstance(pos, Sequence) or isinstance(pos, np.ndarray)) and len(pos) == 2
         pos_x, pos_y = pos
-        return int(pos_x / self.cell_size), int(pos_y / self.cell_size)
+        return math.floor(pos_x / self.cell_size), math.floor(pos_y / self.cell_size)
 
     def get_cell_by_pos(self, pos):
         x, y = self.pos_2_xy(pos)
@@ -50,13 +51,31 @@ class Map:
                 cells.append(self.get_cell(ix, iy))
         return cells
 
-    def get_cell_edge(self, cell):
+    def get_cell_edge(self, cell) -> Tuple[float, float, float, float]:
+        """
+        get cell's edge by cell object
+
+        Args:
+            cell: map cell object, the cell must in the same map
+
+        Returns:
+            edge limit, a tuple of four, (left, right, bottom, top)
+        """
         assert isinstance(cell, MapCell) and isinstance(cell.x, int) and isinstance(cell.y, int)
         x, y = cell.x, cell.y
         assert 0 <= x < self.cell_x and 0 <= y < self.cell_y, "cell invalid"
-        return x * self.cell_size, (x+1) * self.cell_size - 1, y * self.cell_size, (y+1) * self.cell_size - 1
+        return x * self.cell_size, (x+1) * self.cell_size - 1, (y+1) * self.cell_size - 1, y * self.cell_size
 
-    def get_cell_center(self, cell):
+    def get_cell_center(self, cell) -> Tuple[float, float]:
+        """
+        get cell center position by cell object
+
+        Args:
+            cell: target map cell object
+
+        Returns:
+            position: cell center position, a tuple of two integer(float)
+        """
         assert isinstance(cell, MapCell) and isinstance(cell.x, int) and isinstance(cell.y, int)
         x, y = cell.x, cell.y
         assert 0 <= x < self.cell_x and 0 <= y < self.cell_y, "cell invalid"

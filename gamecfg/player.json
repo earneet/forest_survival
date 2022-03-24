@@ -11,6 +11,7 @@
   "energy_init": 10000,
   "hunger_max": 10000,
   "hunger_init": 10000,
+  "ken": 80,
   "run": {
     "allow_terrain": ["*"],
     "limit_terrain": ["forest"]

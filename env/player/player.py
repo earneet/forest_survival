@@ -4,12 +4,15 @@ import itertools
 import numpy as np
 
 from env.common.event.event import Event
+from env.items import is_food
 from env.player.player_config import player_cfg
 from env.player.player_logic import PlayerLogic
 from env.common import PlayerState, DirectionEnum
 
 player_id = itertools.count()
 next(player_id)
+
+_Cosumeable_Items = Tuple[int, str, int]
 
 
 class Player:
@@ -83,6 +86,9 @@ class Player:
     def find_interact_target(self, interact_type="collecting"):
         return self._logic.find_interact_target(interact_type)
 
+    def find_interact_target_insight(self, interact_type="collecting"):
+        return self._logic.find_interact_target_insight(interact_type)
+
     def on_new_day(self):
         if hasattr(self._logic, "on_new_day"):
             self._logic.on_new_day()
@@ -95,6 +101,9 @@ class Player:
 
     def in_home(self):
         return self._logic.in_home()
+
+    def move_home(self):
+        return self._logic.move_home()
 
     def un_equip(self, slot):
         self._logic.un_equip(slot)
@@ -115,15 +124,36 @@ class Player:
     def rest(self):
         self._logic.rest()
 
+    def collect(self):
+        self._logic.collect()
+
     def trim_handy(self):
+        # todo trim handy items
         pass
 
     def trim_house(self):
+        # todo trim house items
         pass
 
     def receive_event(self, event):
         assert isinstance(event, Event)
         self.events.append(event)
+
+    def get_food_cnt(self, handy=True) -> int:
+        total_cnt = 0
+        container = self.handy_items if handy else self.home_items
+        for item, cnt in container:
+            if item and is_food(item):
+                total_cnt += cnt
+        return total_cnt
+
+    def get_foods(self, handy=True) -> List[_Cosumeable_Items]:
+        foods = []
+        container = self.handy_items if handy else self.home_items
+        for idx, item, cnt in enumerate(container):
+            if is_food(item):
+                foods.append((idx, item, cnt))
+        return foods
 
     def __getitem__(self, name):
         if hasattr(self, name):

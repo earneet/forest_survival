@@ -1,12 +1,17 @@
 import abc
 import logging
+import math
 from collections import defaultdict
+from typing import Union, List
 
 import numpy as np
 
+from env.animals import Animal
 from env.common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
 from env.common import Terrain, MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
+from env.plants import Plant
+
 
 class PlayerConcreteLogic(abc.ABC):
     def __init__(self, player, parent_logic):
@@ -14,6 +19,7 @@ class PlayerConcreteLogic(abc.ABC):
         self.parent_logic = parent_logic
 
     def can_enter_state(self, *_) -> bool:
+        assert self
         return True
 
     def on_enter_state(self, *_):
@@ -55,10 +61,9 @@ class PlayerMoveLogic(PlayerConcreteLogic):
         tar_pos = speed * get_vec_by_direction(player.direction) + cur_pos
         cur_cell = env.map.get_cell_by_pos(cur_pos)
         tar_cell = env.map.get_cell_by_pos(tar_pos)
-        if not tar_cell.can_move_in(player):
+        if not (tar_cell and tar_cell.can_move_in(player)):
             self._move_to_edge(cur_cell)
-            player.state = PlayerState.IDLE
-            player.sub_state = None
+            self.parent_logic.switch_state(self.parent_logic.idle_logic)
             return
         player.position = tar_pos
         cur_cell.move_out(player)
@@ -126,7 +131,7 @@ class PlayerBattleLogic(PlayerConcreteLogic):
     def __init__(self, player, logic):
         super(PlayerBattleLogic, self).__init__(player, logic)
 
-    def on_enter_state(self, *, frames, target):
+    def on_enter_state(self, frames, target):
         self.player.attack_frame = frames
         self.player.interact_target = target
 
@@ -429,19 +434,31 @@ class PlayerLogic:
         cnt -= 1
         self.player.handy_items[item_idx] = (item, cnt) if cnt > 1 else (None, 0)
 
-    def find_interact_target(self, interact="collecting"):
-        round_cells = self.player.env.map.get_round_cells_by_pos(self.player.position)
+    def find_interact_target(self, interact="collecting") -> Union[Animal, Plant]:
+        self_pos = self.player.position
+        round_cells = self.player.env.map.get_round_cells_by_pos(self_pos)
+        interactive = self._find_interact_target_in_cells(round_cells, interact)
+        interactive.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
+        return interactive[0] if interactive and np.linalg.norm(
+            interactive[0].position - self_pos) <= self.player.attack_range else None
+
+    def find_interact_target_insight(self, interact="collecting") -> List[Union[Animal, Plant]]:
+        world_map = self.player.env.map
+        ken, self_pos = self.player.ken, self.player.position
+        cell_range = math.ceil(ken/world_map.cell_size)
+        round_cells = world_map.get_round_cells_by_pos(self_pos, cell_range)
+        interactive = self._find_interact_target_in_cells(round_cells, interact)
+        return list(filter(lambda x: np.linalg.norm(x.position - self_pos) <= ken, interactive))
+
+    def _find_interact_target_in_cells(self, cells, interact="collecting") -> List[Union[Animal, Plant]]:
         interactive = []
-        for cell in round_cells:
+        for cell in cells:
             if interact == "collecting":
                 interactive.extend(cell.plants)
             elif interact == "batting":
                 interactive.extend(cell.animals)
                 interactive.extend(filter(lambda x: x != self.player, cell.players))
-        self_pos = self.player.position
-        interactive.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
-        return interactive[0] if interactive and np.linalg.norm(
-            interactive[0].position - self_pos) <= self.player.attack_range else None
+        return interactive
 
     def pickup(self, items, home_box=True):
         for item, cnt in items.items():
@@ -584,6 +601,10 @@ class PlayerLogic:
     def in_home(self):
         return self._check_home()
 
+    def move_home(self):
+        # todo plan a path to go home
+        pass
+
     def _check_home(self) -> bool:
         env_map = self.player.env.map
         cell = env_map.get_cell_by_pos(self.player.position)
@@ -659,7 +680,7 @@ class PlayerLogic:
         if not target:  # can't find any collectable target
             logging.warning("can't find any collectable target")
             return
-        self.switch_state(self.collect_logic)
+        self.switch_state(self.collect_logic, target)
 
     def _process_event_collecting(self, event: Collecting):
         if isinstance(event, Collecting):

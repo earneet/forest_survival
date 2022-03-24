@@ -34,7 +34,7 @@ class AnimalMoveLogic:
                 cur_cell.move_out(self.animal)
                 target_cell.move_in(self.animal)
             else:
-                left, right, top, bottom = self.animal.env.map.get_cell_edge(cur_cell)
+                left, right, bottom, top = self.animal.env.map.get_cell_edge(cur_cell)
                 if direction == DirectionEnum.UP:
                     target_pos[1] = top
                 elif direction == DirectionEnum.RIGHT:
@@ -44,19 +44,6 @@ class AnimalMoveLogic:
                 elif direction == DirectionEnum.LEFT:
                     target_pos[0] = left
                 should_stop = True
-
-        if direction == DirectionEnum.UP and target_pos[1] >= self.target_point[1]:
-            should_stop = True
-            target_pos[1] = self.target_point[1]
-        elif direction == DirectionEnum.RIGHT and target_pos[0] >= self.target_point[0]:
-            should_stop = True
-            target_pos[0] = self.target_point[0]
-        elif direction == DirectionEnum.DOWN and target_pos[1] <= self.target_point[1]:
-            should_stop = True
-            target_pos[1] = self.target_point[1]
-        elif direction == DirectionEnum.LEFT and target_pos[0] <= self.target_point[0]:
-            should_stop = True
-            target_pos[0] = self.target_point[0]
         self.animal.position = target_pos
         if should_stop:
             self.owner_logic.switch_state(self.owner_logic.idle_logic)
@@ -143,7 +130,6 @@ class AnimalLogic:
                 else:
                     cnt = 0
             drop_items[item] = max(cnt, 0) + old_cnt
-
         return drop_items
 
     def damage_by(self, attacker, damage):

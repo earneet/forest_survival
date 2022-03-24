@@ -2,6 +2,7 @@
 {
   "wool": {
     "name": "wool",
+    "categories": ["material"],
     "usable": false,
     "effect": {
     }
@@ -9,6 +10,7 @@
 
   "meat": {
     "name": "meat",
+    "categories": ["food"],
     "usable": true,
     "effect": {
       "hp": 5,
@@ -18,6 +20,7 @@
 
   "cotton": {
     "name": "cotton",
+    "categories": ["material"],
     "usable": false,
     "effect": {
 
@@ -26,6 +29,7 @@
 
   "apple": {
     "name": "apple",
+    "categories": ["food"],
     "usable": true,
     "effect": {
       "hunger": 2
@@ -34,6 +38,7 @@
 
   "herb": {
     "name": "herb",
+    "categories": ["food", "drug"],
     "usable": true,
     "effect": {
       "hp": 10
@@ -42,6 +47,7 @@
 
   "horn": {
     "name": "horn",
+    "categories": ["material"],
     "usable": false,
     "effect": {}
   }
