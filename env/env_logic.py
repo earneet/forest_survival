@@ -5,7 +5,7 @@ import numpy as np
 
 from env.animals import new_animal
 from env.common.terrain import string2terrains
-from env.player import Player
+from env.player import make_player
 from env.map.map_config import map_cfg
 
 
@@ -56,7 +56,8 @@ class EnvLogic:
         if frames % self.FRAME_RATE == 0:
             self.on_second_elapse(frames // self.FRAME_RATE)
 
-        day, day_residual, day_change = frames // self.DAY_FRAMES, frames % self.DAY_FRAMES, frames % self.DAY_FRAMES == 0
+        day = frames // self.DAY_FRAMES
+        day_residual, day_change = frames % self.DAY_FRAMES, frames % self.DAY_FRAMES == 0
         if day_change:
             month, month_change = day // 30, day % 30 == 0
             if month_change:
@@ -84,7 +85,7 @@ class EnvLogic:
         for cell in cells:
             y = cell.y
             x = cell.x
-            player = Player(self._env)
+            player = make_player(self._env)
             player.position = ((x + 0.5) * env_map.cell_size, (y + 0.5) * env_map.cell_size)
             logging.warning(f"spawn a {player.get_name()} at cell {cell.x},{cell.y}, "
                             f"position ({player.position[0]},{player.position[1]})")

@@ -1,6 +1,8 @@
+
 import logging
 
 from env import Env
+from env.AI.path import find_path
 
 
 root_logger = logging.root
@@ -11,8 +13,6 @@ if __name__ == "__main__":
     env = Env(render=True)
     env.reset()
 
-    logging.debug("Ready to go ... ")
-    while True:
-        env.step(0)
-        if not env.players or env.players[0].is_dead():
-            break
+    res = find_path(env.players[0], env.map.get_cell(10, 10), env.map.get_cell(15, 15), env.map)
+    for c in res:
+        print((c.x, c.y))

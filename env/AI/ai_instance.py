@@ -2,7 +2,13 @@
 
 class AI:
     def __init__(self):
-        pass
+        self.player = None
+        self.goal = None
+        self.selector = None
 
     def update(self):
-        pass
+        new_goal = self.selector.select(self.player)
+        if new_goal != self.goal:
+            self.goal = new_goal
+
+        self.goal.update()

@@ -1,17 +1,18 @@
 import pygame as pg
 
 from env.common import Terrain
+from env.engine.utils import load_image
 
 
 class EMapCell(pg.sprite.Sprite):
-    terrain2images = {}
     containers = None
+    terrain2images = {}
 
-    def __init__(self, game_obj):
-        super().__init__(self.containers)
+    def __init__(self, game_obj, engine):
+        super(EMapCell, self).__init__(self.containers)
         self.game_obj = game_obj
+        self.engine = engine
 
-        from env.engine.utils import load_image
         if not self.terrain2images:
             self.terrain2images = {
                 Terrain.FOREST: load_image("forest.png"),
@@ -28,3 +29,11 @@ class EMapCell(pg.sprite.Sprite):
 
     def update(self):
         pass
+
+    def check_click(self, pos, button):
+        if not self.rect.collidepoint(pos):
+            return False
+        if button == pg.BUTTON_RIGHT:
+            self.engine.move_to(pos)
+            return True
+        return False

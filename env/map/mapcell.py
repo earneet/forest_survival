@@ -30,6 +30,7 @@ class MapCell:
         self.plants = []
         self.animals = []
         self.players = []
+        self.owner = None       # when the type is HOUSE, it can have an owner, else None
         self._logic = Terrain2Logic[terrain](self)
 
     def spawn_plant(self, plant):
@@ -40,6 +41,11 @@ class MapCell:
 
     def can_move_in(self, game_obj):
         return self._logic.can_move_in(game_obj)
+
+    def traversing_cost(self, game_obj, interest="time") -> float:
+        # todo implement cost for path planing
+        assert self and game_obj and interest
+        return 1
 
     def move_out(self, game_obj):
         container = None

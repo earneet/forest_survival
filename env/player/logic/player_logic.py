@@ -1,4 +1,3 @@
-import abc
 import logging
 import math
 from collections import defaultdict
@@ -6,287 +5,14 @@ from typing import Union, List
 
 import numpy as np
 
+from env.AI.path import find_path
 from env.animals import Animal
 from env.common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
-from env.common import Terrain, MoveType, PlayerState, SlotType, get_vec_by_direction, CLOTHES_SLOT, DirectionEnum
+from env.common import Terrain, MoveType, PlayerState, SlotType, CLOTHES_SLOT
 from env.plants import Plant
-
-
-class PlayerConcreteLogic(abc.ABC):
-    def __init__(self, player, parent_logic):
-        self.player = player
-        self.parent_logic = parent_logic
-
-    def can_enter_state(self, *_) -> bool:
-        assert self
-        return True
-
-    def on_enter_state(self, *_):
-        pass
-
-    def on_leave_state(self, *_):
-        pass
-
-    def update(self):
-        pass
-
-
-class PlayerMoveLogic(PlayerConcreteLogic):
-    event2direction = {
-        MoveUp: DirectionEnum.UP,
-        MoveRight: DirectionEnum.RIGHT,
-        MoveDown: DirectionEnum.DOWN,
-        MoveLeft: DirectionEnum.LEFT
-    }
-
-    def __init__(self, player, logic):
-        super(PlayerMoveLogic, self).__init__(player, logic)
-
-    def on_enter_state(self, move_type, direction):
-        self.player.state = PlayerState.MOVING
-        self.player.sub_state = move_type
-        self.player.direction = direction
-
-    def on_leave_state(self, *_):
-        self.player.state = PlayerState.IDLE
-        self.player.sub_state = None
-        self.parent_logic.cur_logic = None
-
-    def update(self):
-        player = self.player
-        env = player.env
-        speed = self.get_move_speed()
-        cur_pos = player.position
-        tar_pos = speed * get_vec_by_direction(player.direction) + cur_pos
-        cur_cell = env.map.get_cell_by_pos(cur_pos)
-        tar_cell = env.map.get_cell_by_pos(tar_pos)
-        if not (tar_cell and tar_cell.can_move_in(player)):
-            self._move_to_edge(cur_cell)
-            self.parent_logic.switch_state(self.parent_logic.idle_logic)
-            return
-        player.position = tar_pos
-        cur_cell.move_out(player)
-        tar_cell.move_in(player)
-
-    def get_move_speed(self):
-        player = self.player
-        env = player.env
-        env.get_global_temperature()
-
-        # move type speed
-        from . import player_cfg
-        if player.sub_state == MoveType.WALKING:
-            speed = player_cfg.speed_walk * env.STEP_BREAK
-        elif player.sub_state == MoveType.RUNNING:
-            speed = player_cfg.speed_run * env.STEP_BREAK
-        elif player.sub_state == MoveType.SWIMMING:
-            speed = player_cfg.speed_swim * env.STEP_BREAK
-        else:
-            return 0
-
-        # hunger effect
-        if self.player.hunger < 5:
-            speed = 0
-        elif 5 <= self.player.hunger < 20:
-            speed *= 0.5
-        elif 20 <= self.player.hunger < 60:
-            pass
-        elif 60 <= self.player.hunger < 90:
-            speed *= 1.2
-        elif 90 <= self.player.hunger <= 100:
-            speed *= 1.5
-        return speed
-
-    def process_event_stop(self, _):
-        if self.player.state != PlayerState.MOVING:
-            return
-        self.parent_logic.switch_state(self.parent_logic.idle_logic)
-
-    def process_event_move(self, event):
-        if self.player.state != PlayerState.MOVING:
-            cell = self.player.env.map.get_cell_by_pos(self.player.position)
-            direction = self.event2direction[event.__class__]
-            self.parent_logic.switch_state(self, MoveType.RUNNING, direction)
-            if hasattr(cell, "on_player_start_move"):
-                cell.on_start_move()
-
-    def _move_to_edge(self, cell):
-        player = self.player
-        left, right, bottom, top = player.env.map.get_cell_edge(cell)
-        direction = player.direction
-        pos = player.position
-        if direction == DirectionEnum.UP:
-            pos[1] = top
-        elif direction == DirectionEnum.RIGHT:
-            pos[0] = right
-        elif direction == DirectionEnum.DOWN:
-            pos[1] = bottom
-        elif direction == DirectionEnum.LEFT:
-            pos[0] = left
-        player.position = pos
-
-
-class PlayerBattleLogic(PlayerConcreteLogic):
-    def __init__(self, player, logic):
-        super(PlayerBattleLogic, self).__init__(player, logic)
-
-    def on_enter_state(self, frames, target):
-        self.player.attack_frame = frames
-        self.player.interact_target = target
-
-    def on_leave_state(self, *_):
-        self.player.interact_target = None
-
-    def update(self):
-        player = self.player
-        env = player.env
-        last_settlement = player.attack_frame
-        if env.frames - last_settlement != env.STEP_FRAME_INTERVAL:  # settlement battle per second
-            return
-        player.attack_frame = env.frames
-        target = player.interact_target
-
-        if target and not target.is_dead() and target.can_damage_by(player):
-            damage = self._compute_attack()
-            target.damage_by(player, damage)
-            player.hunger -= 1  # 战斗状态下， 每次攻击 饱食度额外减一
-
-        if not target or target.is_dead():
-            self.on_leave_state()
-            self.player.state = PlayerState.IDLE
-            self.player.interact_target = None
-
-            if target:
-                if target.is_player:
-                    pass
-                elif target.is_animal:
-                    rewards = target.drop()
-                    self.player.pickup(rewards)
-
-    def process_event_attack(self, _):
-        if self.player.state == PlayerState.BATTLING:
-            return
-        target = self.player.find_interact_target("batting")
-        if target is None or target.is_dead():
-            logging.warning("no interactive target found")
-            return
-        self.parent_logic.switch_state(self, self.player.env.frames, target)
-
-    def can_damage_by(self, attacker):
-        return self.player != attacker
-
-    def damage_by(self, attacker, damage):
-        player = self.player
-        if player.hp <= 0:
-            return 0
-        real_damage = self._compute_damage(damage)
-        player.hp -= real_damage
-        if player.hp <= 0:
-            player.killer = attacker
-        return real_damage
-
-    def _compute_attack(self, player=None):
-        player = self.player if player is None else player
-        attack = player.attack
-        equip = player.equips[SlotType.EQUIP]
-        if equip is not None:
-            attack += equip.get_attack()
-        if player.energy < 20:  # if energy below than 20, attack make half effect
-            attack *= 0.5
-        return attack
-
-    @staticmethod
-    def _compute_damage(damage):
-        # todo damage may be offset by equipment and other factors, now no equip can counteract damage
-        return damage
-
-
-class PlayerMakeLogic(PlayerConcreteLogic):
-    def __init__(self, player, logic):
-        super(PlayerMakeLogic, self).__init__(player, logic)
-        self.making_cfg = None
-        self.success_frame = None
-
-    def update(self):
-        frame = self.player.frames
-        if frame < self.success_frame:
-            return
-        self._make(self.making_cfg.name, self.making_cfg)
-        self.on_leave_state()
-        return
-
-    def on_enter_state(self, *args):
-        self.player.make_frame = self.player.frames
-        self.making_cfg = args[0]
-        self.success_frame = int(
-            self.making_cfg.recipe.time_consuming * self.player.env.HOUR_FRAMES) + self.player.frames
-        self.player.state = PlayerState.MAKING
-        self.parent_logic.cur_logic = self
-
-    def on_leave_state(self, *_):
-        self.player.state = PlayerState.IDLE
-        self.player.sub_state = None
-        target = self.player.interact_target
-        if target and not target.is_dead():
-            target.stop_collect(self.player)
-        self.making_cfg = None
-        self.parent_logic.cur_logic = None
-        self.player.make_frame = 0
-
-    def _make(self, item, cfg) -> bool:
-        production = None
-        if item.endswith("_clothes"):
-            production = make_cloth(item)
-        elif item.endswith("_equip"):
-            production = make_equip(item)
-        if production:
-            self.parent_logic.remove_cost(cfg.recipe.materials)
-            self.parent_logic.put_handy(production)
-            return True
-        return False
-
-
-class PlayerRestingLogic(PlayerConcreteLogic):
-    def __init__(self, player, logic):
-        super(PlayerRestingLogic, self).__init__(player, logic)
-        self.parent_logic = logic
-
-    def update(self):
-        pass
-
-    def on_enter_state(self, *args):
-        pass
-
-    def on_leave_state(self, *args):
-        pass
-
-
-class PlayerCollectLogic(PlayerConcreteLogic):
-    def __init__(self, player, logic):
-        super(PlayerCollectLogic, self).__init__(player, logic)
-        self.target = None
-
-    def on_enter_state(self, target):
-        self.target = target
-        self.parent_logic.cur_logic = self
-        self.player.interact_target = target
-        self.player.state = PlayerState.COLLECTING
-        self.player.sub_state = None
-        self.target.collect(self.player)
-
-    def on_leave_state(self):
-        self.player.state = PlayerState.IDLE
-        if self.target and not self.target.is_dead():
-            self.target.stop_collect(self.player)
-        self.target = None
-
-    def update(self):
-        pass
-
-class PlayerIdleLogic(PlayerConcreteLogic):
-    def __init__(self, player, logic):
-        super(PlayerIdleLogic, self).__init__(player, logic)
+from env.player.logic.concretelogic import PlayerMoveLogic, PlayerBattleLogic, PlayerMakeLogic, PlayerCollectLogic, \
+    PlayerRestingLogic, PlayerIdleLogic
 
 
 class PlayerLogic:
@@ -445,7 +171,7 @@ class PlayerLogic:
     def find_interact_target_insight(self, interact="collecting") -> List[Union[Animal, Plant]]:
         world_map = self.player.env.map
         ken, self_pos = self.player.ken, self.player.position
-        cell_range = math.ceil(ken/world_map.cell_size)
+        cell_range = math.ceil(ken / world_map.cell_size)
         round_cells = world_map.get_round_cells_by_pos(self_pos, cell_range)
         interactive = self._find_interact_target_in_cells(round_cells, interact)
         return list(filter(lambda x: np.linalg.norm(x.position - self_pos) <= ken, interactive))
@@ -602,8 +328,17 @@ class PlayerLogic:
         return self._check_home()
 
     def move_home(self):
-        # todo plan a path to go home
-        pass
+        home_position = self.player.home_position()
+        return self.move_to(home_position)
+
+    def move_to(self, position):
+        world_map = self.player.env.map
+        cur_cell = world_map.get_cell_by_pos(self.player.position)
+        target_cell = world_map.get_cell_by_pos(position)
+        path_cells = find_path(self.player, cur_cell, target_cell, world_map)
+        if not path_cells:
+            return False
+        self.switch_state(self.move_logic, path_cells)
 
     def _check_home(self) -> bool:
         env_map = self.player.env.map

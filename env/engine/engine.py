@@ -55,7 +55,6 @@ class Engine:
         self.ui_g = pg.sprite.Group()
         self.all_g = pg.sprite.RenderUpdates()
 
-        EMapCell.containers = self.all_g
         EAnimal.containers = self.animals_g, self.all_g
         EPlant.containers = self.plants_g, self.all_g
         EMapCell.containers = self.mapcells_g, self.all_g
@@ -66,10 +65,11 @@ class Engine:
         EMakeTable.containers = self.ui_g, self.all_g
         EEquipBag.containers = self.ui_g, self.all_g
         EHomeBox.containers = self.ui_g, self.all_g
+        EMapCell.containers = self.ui_g, self.all_g
 
         # prepare map cell sprite
         for cell in self._env.map.cells:
-            self.cells.append(EMapCell(cell))
+            self.cells.append(EMapCell(cell, self))
         EPlayerInfo(self._env.players[0])
         EHandy(self._env.players[0])
         EMakeTable(self._env.players[0])
@@ -83,6 +83,7 @@ class Engine:
         self.animals_g = None
         self.plants_g = None
         self.all_g = None
+        self.ui_g = None
         pg.quit()
 
     def update(self):
@@ -111,6 +112,9 @@ class Engine:
                 self._process_key_down(e)
             elif e.type == pg.KEYUP:
                 self._process_key_up(e)
+
+    def move_to(self, pos):
+        self._env.players[0].move_to(pos)
 
     def _process_key_down(self, event):
         key = event.key
@@ -153,7 +157,8 @@ class Engine:
 
     def _process_mouse_click(self, event, button):
         for sprite in self.ui_g:
-            sprite.check_click(event.pos, button)
+            if sprite.check_click(event.pos, button):
+                break
 
     def _do_diff(self):
         new_plants, dumped_plants = self._find_diff_plants()

@@ -1,2 +1,4 @@
 from .player import Player
-from .player_config import player_cfg
+
+def make_player(env):
+    return Player(env)

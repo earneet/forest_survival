@@ -5,8 +5,8 @@ import numpy as np
 
 from env.common.event.event import Event
 from env.items import is_food
-from env.player.player_config import player_cfg
-from env.player.player_logic import PlayerLogic
+from env.common.player_config import player_cfg
+from env.player.logic import make_logic
 from env.common import PlayerState, DirectionEnum
 
 player_id = itertools.count()
@@ -19,7 +19,7 @@ class Player:
     def __init__(self, env):
         self.id = next(player_id)
         self.env = env
-        self._logic = PlayerLogic(self)
+        self._logic = make_logic(self)
         self.action = None
         self.events = []
         self.state = PlayerState.IDLE
@@ -104,6 +104,9 @@ class Player:
 
     def move_home(self):
         return self._logic.move_home()
+
+    def move_to(self, position):
+        return self._logic.move_to(position)
 
     def un_equip(self, slot):
         self._logic.un_equip(slot)
