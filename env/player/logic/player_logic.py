@@ -13,6 +13,7 @@ from env.common import Terrain, MoveType, PlayerState, SlotType, CLOTHES_SLOT
 from env.plants import Plant
 from env.player.logic.concretelogic import PlayerMoveLogic, PlayerBattleLogic, PlayerMakeLogic, PlayerCollectLogic, \
     PlayerRestingLogic, PlayerIdleLogic
+from env.player.logic.player_common_logic import check_materials
 
 
 class PlayerLogic:
@@ -78,14 +79,19 @@ class PlayerLogic:
         pass
 
     def get_fells_temperature(self):
-        return self.player.env.get_global_temperature() + self.get_delta_temperature()
+        return self.get_naked_temperature() + self.get_cloth_delta_temperature()
 
-    def get_delta_temperature(self):
+    def get_naked_temperature(self):
+        return self.player.env.get_global_temperature() + self.get_terrain_delta_temperature()
+
+    def get_terrain_delta_temperature(self):
         cell = self.player.env.map.get_cell_by_pos(self.player.position)
-        terrain_delta = cell.get_temperature_delta()
+        return cell.get_temperature_delta()
+
+    def get_cloth_delta_temperature(self):
         equipment = self.player.equips[CLOTHES_SLOT]
         equipment_delta = 0 if not equipment else equipment.get_temperature_delta()
-        return terrain_delta + equipment_delta
+        return equipment_delta
 
     def can_damage_by(self, attacker):
         return self.battle_logic.can_damage_by(attacker)
@@ -180,10 +186,10 @@ class PlayerLogic:
         interactive = []
         for cell in cells:
             if interact == "collecting":
-                interactive.extend(cell.plants)
+                interactive.extend(filter(lambda x: not x.is_dead(), cell.plants))
             elif interact == "batting":
                 interactive.extend(cell.animals)
-                interactive.extend(filter(lambda x: x != self.player, cell.players))
+                interactive.extend(filter(lambda x: x != self.player and not x.is_dead(), cell.players))
         return interactive
 
     def pickup(self, items, home_box=True):
@@ -209,7 +215,7 @@ class PlayerLogic:
             from env.items import equip_cfg
             cfgs = equip_cfg
         cfg = cfgs[item]
-        if cfg.recipe is None or not self._check_material(cfg.recipe.materials):
+        if cfg.recipe is None or not check_materials(self.player, cfg.recipe.materials):
             logging.warning(f"have no enough materials for make a {item}")
             self.player.active_message.append(
                 f"try to make a {item} but have no enough materials for make a {item}")
@@ -230,22 +236,6 @@ class PlayerLogic:
             if item[0] is None or item[1] == 0:
                 n -= 1
         return n <= 0
-
-    def _check_material(self, materials) -> bool:
-        haven = {}
-        for s, cnt in self.player.handy_items:
-            if s is None or cnt == 0:
-                continue
-            if not isinstance(s, str):
-                s = s.name()
-            if s not in haven:
-                haven[s] = cnt
-            else:
-                haven[s] += cnt
-        for name, cnt in materials.items():
-            if name not in haven or cnt > haven[name]:
-                return False
-        return True
 
     def remove_cost(self, materials) -> bool:
         cost = {}
@@ -332,13 +322,7 @@ class PlayerLogic:
         return self.move_to(home_position)
 
     def move_to(self, position):
-        world_map = self.player.env.map
-        cur_cell = world_map.get_cell_by_pos(self.player.position)
-        target_cell = world_map.get_cell_by_pos(position)
-        path_cells = find_path(self.player, cur_cell, target_cell, world_map)
-        if not path_cells:
-            return False
-        self.switch_state(self.move_logic, path_cells)
+        self.switch_state(self.move_logic, position)
 
     def _check_home(self) -> bool:
         env_map = self.player.env.map
@@ -410,7 +394,14 @@ class PlayerLogic:
                 else:
                     self.player.handy2home(event.idx)
 
+    def battle(self):
+        target = self.player.find_interact_target("batting")
+        if target:
+            self.switch_state(self.battle_logic, target)
+
     def collect(self):
+        if self.player.state == PlayerState.COLLECTING:
+            return
         target = self.player.find_interact_target()
         if not target:  # can't find any collectable target
             logging.warning("can't find any collectable target")

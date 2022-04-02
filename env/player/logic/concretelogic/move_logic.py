@@ -1,5 +1,6 @@
-import logging
+import numpy as np
 
+from env.AI.path import find_path
 from env.common import *
 from env.player.logic.concretelogic.concrete_logic import PlayerConcreteLogic
 from env.common.player_config import player_cfg
@@ -19,28 +20,42 @@ class PlayerMoveLogic(PlayerConcreteLogic):
         self.path = None
         self.map = player.env.map
 
-    def on_enter_state(self, type_or_path, orientation=DirectionEnum.INVALID):
+    def on_enter_state(self, type_or_pos, orientation=DirectionEnum.INVALID):
         if orientation != DirectionEnum.INVALID:
-            self.enter_with_op(type_or_path, orientation)
+            self.enter_with_op(type_or_pos, orientation)
         else:
-            self.enter_with_tar(type_or_path)
+            self.enter_with_tar(type_or_pos)
 
     def enter_with_op(self, speed_type, orientation):
         self.player.state = PlayerState.MOVING
         self.player.sub_state = speed_type
         self.player.direction = orientation
 
-    def enter_with_tar(self, path):
-        logging.info("enter_with_tar")
+    def enter_with_tar(self, pos):
+        if self.target_pos and np.linalg.norm(pos-self.target_pos) < 2:
+            self.target_pos = pos
+            return
+
+        world_map = self.player.env.map
+        cur_cell = world_map.get_cell_by_pos(self.player.position)
+        target_cell = world_map.get_cell_by_pos(pos)
+        path_cells = find_path(self.player, cur_cell, target_cell, world_map)
+        if not path_cells:
+            self.path = [cur_cell]
+        else:
+            path_chain = path_cells[1:] if len(path_cells) > 1 else path_cells
+            self.path = path_chain
+
+        self.target_pos = pos
         self.player.state = PlayerState.MOVING
         self.player.sub_state = MoveType.RUNNING
-        self.path = path
-        self.player.direction = self._compute_towards(self.player.position, self.map.get_cell_center(path[0]))
+        self.player.direction = self._compute_towards(self.player.position, self.map.get_cell_center(self.path[0]))
 
     def on_leave_state(self, *_):
         self.player.state = PlayerState.IDLE
         self.player.sub_state = None
         self.path = None
+        self.target_pos = None
         self.parent_logic.cur_logic = None
 
     def update(self):

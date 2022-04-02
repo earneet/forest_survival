@@ -21,6 +21,8 @@ class AStarCell:
 
 
 def a_star(game_obj, start: MapCell, destination: MapCell, world_map: Map):
+    if start == destination:
+        return [start]
     open_set = PriorityQueue()
     visited = set()
 
@@ -31,7 +33,7 @@ def a_star(game_obj, start: MapCell, destination: MapCell, world_map: Map):
         return list(filter(lambda c: c and c.can_move_in(game_obj) and c not in visited, neighbors_))
 
     def make_astar_cell(cell: MapCell, pre: Optional[AStarCell]) -> AStarCell:
-        g = pre.g + 1 if pre else 1
+        g = pre.g + cell.traversing_cost() if pre else 1
         h = abs(destination.x - cell.x) + abs(destination.y - cell.y)
         _astar_cell = AStarCell(cell, g, h, pre)
         return _astar_cell

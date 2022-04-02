@@ -1,15 +1,3 @@
-
 {
-  "animals": {
-    "sheep": 2,
-    "chick": 2,
-    "cattle": 2
-  },
-
-  "plants": {
-  },
-
-  "npc": {
-    "npc": 2
-  }
+  "players": ["type_1", "type_1", "type_1"]
 }

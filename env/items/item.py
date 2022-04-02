@@ -1,3 +1,8 @@
+from typing import Optional, Dict
+
+from env.items import clothes_cfg, equip_cfg
+
+
 class Item:
     def __init__(self, item_id):
         self.id = item_id
@@ -35,10 +40,9 @@ def make_cloth(item_id) -> Cloth:
 
 
 def make_equip(item_id) -> Equip:
-    from env.items import equip_cfg
-    equip_cfg = equip_cfg[item_id]
+    cfg = equip_cfg[item_id]
     if equip_cfg:
-        return Equip(equip_cfg)
+        return Equip(cfg)
 
 
 def make_common_item(item_id) -> Item:
@@ -55,3 +59,11 @@ def make_item(item_id: str):
         return make_equip(item_id)
     else:
         return make_common_item(item_id)
+
+
+def get_recipe_materials(item: str) -> Optional[Dict[str, int]]:
+    item_cfgs = clothes_cfg if item.endswith("_clothes") else equip_cfg
+    for name, cfg in item_cfgs.items():
+        if name == item:
+            return cfg.recipe.materials
+    return None

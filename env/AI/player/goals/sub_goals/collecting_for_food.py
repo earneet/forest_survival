@@ -2,9 +2,9 @@ from env.AI.player.goals.sub_goals.base_sub_goal import BaseSubGoal
 import numpy as np
 
 
-class Collecting(BaseSubGoal):
+class CollectingFood(BaseSubGoal):
     def __init__(self):
-        super(Collecting, self).__init__()
+        super(CollectingFood, self).__init__()
 
     def update(self, player) -> bool:
         targets = player.find_interact_target_insight(interact_type="collecting")

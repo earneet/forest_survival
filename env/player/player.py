@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple
 import itertools
 import numpy as np
 
+from env.AI import make_ai_instance
 from env.common.event.event import Event
 from env.items import is_food
 from env.common.player_config import player_cfg
@@ -16,12 +17,14 @@ _Cosumeable_Items = Tuple[int, str, int]
 
 
 class Player:
-    def __init__(self, env):
+    def __init__(self, env, disposition="type_1"):
         self.id = next(player_id)
         self.env = env
         self._logic = make_logic(self)
+        self._ai_instance = make_ai_instance(self)
         self.action = None
         self.events = []
+        self.cur_goal = ""
         self.state = PlayerState.IDLE
         self.sub_state = None
         self.sub_state_stack = []  # used by mapcell logic, for resume pre sub_state when leave current cell
@@ -51,6 +54,8 @@ class Player:
         self.is_player = True
         self.is_animal = False
         self.is_plant = False
+        self.disposition = disposition
+        self.ken = 80
 
     @property
     def speed(self):
@@ -66,12 +71,17 @@ class Player:
     def update(self):
         if self._logic:
             self._logic.update()
+        if self._ai_instance:
+            self._ai_instance.update()
 
-    def is_dead(self):
+    def is_dead(self) -> bool:
         return self.hp <= 0
 
-    def get_fells_temperature(self):
+    def get_fells_temperature(self) -> float:
         return self._logic.get_fells_temperature()
+
+    def get_naked_temperature(self) -> float:
+        return self._logic.get_naked_temperature()
 
     def can_damage_by(self, player):
         return self._logic.can_damage_by(player)
@@ -126,6 +136,9 @@ class Player:
 
     def rest(self):
         self._logic.rest()
+
+    def battle(self):
+        self._logic.battle()
 
     def collect(self):
         self._logic.collect()

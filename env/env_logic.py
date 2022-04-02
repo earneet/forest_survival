@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from queue import Queue
 
 import numpy as np
@@ -36,15 +37,14 @@ class EnvLogic:
     def update(self):
         # first update timer
         frames = self._env.frames + 1
+        env_map = self._env.map
         self._env.frames += 1
-        for player in self._env.players:
-            player.update()
-
-        for animal in self._env.animals:
-            animal.update()
-
-        for plant in self._env.plants:
-            plant.update()
+        for game_obj in chain(self._env.players, self._env.animals, self._env.plants):
+            game_obj.update()
+            if game_obj.is_dead():
+                cell = env_map.get_cell_by_pos(game_obj.position)
+                if cell:
+                    cell.remove_dead(game_obj)
 
         self._env.players = [p for p in self._env.players if p.hp > 0]
         self._env.animals = [p for p in self._env.animals if p.hp > 0]
@@ -82,7 +82,8 @@ class EnvLogic:
         env_map = self._env.map
         self._env.players = []
         cells = env_map.select_cells(string2terrains("SELF_HOUSE"))
-        for cell in cells:
+        other_cells = env_map.select_cells(string2terrains("HOUSE"))
+        for cell in chain(cells, other_cells):
             y = cell.y
             x = cell.x
             player = make_player(self._env)

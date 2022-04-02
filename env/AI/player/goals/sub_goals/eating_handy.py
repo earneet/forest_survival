@@ -2,12 +2,12 @@ from env.AI.player.goals.sub_goals.base_sub_goal import BaseSubGoal
 from env.items import prop_cfg
 
 
-class SubGoalEating1(BaseSubGoal):
+class EatingHandy(BaseSubGoal):
     """
     Eating the food in the handy bag
     """
     def __init__(self):
-        super(SubGoalEating1, self).__init__()
+        super(EatingHandy, self).__init__()
 
     def update(self, player) -> bool:
         if player.get_food_cnt() <= 0:

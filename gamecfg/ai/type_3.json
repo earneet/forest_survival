@@ -1,13 +1,17 @@
 [
   {
     "eating": {
-      "hunger": [40, 60]
+      "hunger": [50, 100],
+      "eat_hunger": 50
     },
     "rest": {
-      "energy": [20, 50]
+      "energy": 50
     },
     "warm": {
-      "temperature": [20, 30]
+      "temperature": [
+        20,
+        30
+      ]
     },
     "promote": {
     },

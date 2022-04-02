@@ -3,6 +3,8 @@ import logging
 from env.common import Terrain
 from .mapcell_logic import MapLogicHouse, MapLogicCommon, MapLogicForest, MapLogicRiver
 from ..animals import Animal
+from ..common.terrain import get_temperature_delta, get_playercost
+from ..plants import Plant
 from ..player import Player
 
 Terrain2Logic = {
@@ -11,14 +13,6 @@ Terrain2Logic = {
     Terrain.FOREST: MapLogicForest,
     Terrain.LAWN: MapLogicCommon,
     Terrain.RIVER: MapLogicRiver
-}
-
-TerrainTemperature = {
-    Terrain.SELF_HOUSE: 0,
-    Terrain.HOUSE: 0,
-    Terrain.FOREST: 0,
-    Terrain.LAWN: 0,
-    Terrain.RIVER: -5
 }
 
 
@@ -42,10 +36,8 @@ class MapCell:
     def can_move_in(self, game_obj):
         return self._logic.can_move_in(game_obj)
 
-    def traversing_cost(self, game_obj, interest="time") -> float:
-        # todo implement cost for path planing
-        assert self and game_obj and interest
-        return 1
+    def traversing_cost(self, game_obj=None, interest="time") -> float:
+        return get_playercost(self.type, game_obj, interest)
 
     def move_out(self, game_obj):
         container = None
@@ -59,15 +51,23 @@ class MapCell:
             container.remove(game_obj)
         return self._logic.on_move_out(game_obj)
 
-    def get_temperature_delta(self):
-        return TerrainTemperature[self.type]
-
     def move_in(self, game_obj):
         if isinstance(game_obj, Player):
             self.players.append(game_obj)
         elif isinstance(game_obj, Animal):
             self.animals.append(game_obj)
         self._logic.on_move_in(game_obj)
+
+    def remove_dead(self, game_obj):
+        if isinstance(game_obj, Player):
+            self.players.remove(game_obj)
+        elif isinstance(game_obj, Animal):
+            self.animals.remove(game_obj)
+        elif isinstance(game_obj, Plant):
+            self.plants.remove(game_obj)
+
+    def get_temperature_delta(self):
+        return get_temperature_delta(self.type)
 
     def is_empty(self):
         return not (self.plants or self.animals or self.players)
