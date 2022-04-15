@@ -5,7 +5,6 @@ from typing import Union, List
 
 import numpy as np
 
-from env.AI.path import find_path
 from env.animals import Animal
 from env.common.event.event import *
 from env.items.item import Equip, Cloth, make_equip, make_cloth
@@ -172,7 +171,7 @@ class PlayerLogic:
         interactive = self._find_interact_target_in_cells(round_cells, interact)
         interactive.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
         return interactive[0] if interactive and np.linalg.norm(
-            interactive[0].position - self_pos) <= self.player.attack_range else None
+            interactive[0].position - self_pos) <= self.player.get_attack_range() else None
 
     def find_interact_target_insight(self, interact="collecting") -> List[Union[Animal, Plant]]:
         world_map = self.player.env.map
@@ -187,7 +186,7 @@ class PlayerLogic:
         for cell in cells:
             if interact == "collecting":
                 interactive.extend(filter(lambda x: not x.is_dead(), cell.plants))
-            elif interact == "batting":
+            elif interact == "battling":
                 interactive.extend(cell.animals)
                 interactive.extend(filter(lambda x: x != self.player and not x.is_dead(), cell.players))
         return interactive
@@ -341,7 +340,7 @@ class PlayerLogic:
                 item = (zone[0], zone[1] + putin_num)
                 handy_items[i] = item
                 remain -= putin_num
-                logging.info(f" put {item_name} count {putin_num}")
+                logging.debug(f" put {item_name} count {putin_num}")
                 if remain == 0:
                     return True
 
@@ -395,9 +394,9 @@ class PlayerLogic:
                     self.player.handy2home(event.idx)
 
     def battle(self):
-        target = self.player.find_interact_target("batting")
+        target = self.player.find_interact_target("battling")
         if target:
-            self.switch_state(self.battle_logic, target)
+            self.switch_state(self.battle_logic, self.player.frames, target)
 
     def collect(self):
         if self.player.state == PlayerState.COLLECTING:

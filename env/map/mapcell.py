@@ -60,7 +60,10 @@ class MapCell:
 
     def remove_dead(self, game_obj):
         if isinstance(game_obj, Player):
-            self.players.remove(game_obj)
+            if game_obj in self.players:
+                self.players.remove(game_obj)
+            else:
+                logging.warning("error happened, please check and fixed it")
         elif isinstance(game_obj, Animal):
             self.animals.remove(game_obj)
         elif isinstance(game_obj, Plant):

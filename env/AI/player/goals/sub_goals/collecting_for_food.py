@@ -7,7 +7,6 @@ class CollectingFood(BaseSubGoal):
         super(CollectingFood, self).__init__()
 
     def update(self, player) -> bool:
-        targets = player.find_interact_target_insight(interact_type="collecting")
         target = player.find_interact_target(interact_type="collecting")
         if not target:
             return False

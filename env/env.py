@@ -1,23 +1,10 @@
 from enum import IntEnum
 
+from .common.season import Season, get_season_temperature
 from .engine import get_engine
+from .entity import marshal
 from .env_logic import EnvLogic
 from .map import Map
-
-class Season(IntEnum):
-    SPRING = 1
-    SUMMER = 2
-    AUTUMN = 3
-    WINTER = 4
-
-
-SeasonTemperatures = {
-    Season.SPRING: 25,
-    Season.SUMMER: 30,
-    Season.AUTUMN: 18,
-    Season.WINTER: 10
-}
-
 
 class Env:
     STEP_FRAME_INTERVAL = 10
@@ -40,16 +27,18 @@ class Env:
         self.message = []
         self.engine = get_engine()
         self.engine.set_env(self)
+        self.ai = "rule"
 
     def get_global_temperature(self):
-        return SeasonTemperatures[self.season]
+        return get_season_temperature(self.season)
 
     def reset(self):
         self.frames = 0
         self.map = Map()
         self.logic.reset()
-        self.engine.set_env(self)
-        self.engine.reset()
+        if self.render:
+            self.engine.set_env(self)
+            self.engine.reset()
 
     def step(self, actions):
         assert actions is not None, "actions Can't be None"
@@ -58,10 +47,15 @@ class Env:
             self.logic.update()
             if self.render:
                 self.engine.update()
+            frames += 1
 
     def observe(self):
         assert self is not None
-        return ""
+        for p in self.players:
+            p.active_message = []
+            p.passive_message = []
+        self.message = []
+        return marshal(self)
 
     def is_player(self, pid) -> bool:
         for p in self.players:
@@ -84,3 +78,15 @@ class Env:
         for p in self.players:
             if p.id == pid:
                 return p
+
+    def marshal(self):
+        pass
+
+    def marshal_animal(self, animal):
+        pass
+
+    def marshal_plants(self, plant):
+        pass
+
+    def marshal_player(self, player):
+        pass

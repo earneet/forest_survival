@@ -14,9 +14,3 @@ class WarmGoal(BaseGoal):
         if cfg.temperature[0] <= fells_temperature < cfg.temperature[1]:
             return False
         return True
-
-    def update(self, player):
-        for sg in self.sub_goals:
-            if sg.update(player):
-                return True
-        return False

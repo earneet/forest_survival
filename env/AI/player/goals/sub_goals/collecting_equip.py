@@ -20,7 +20,7 @@ class CollectingEquip(BaseSubGoal):
             return False
         living_beings.sort(key=lambda x: np.linalg.norm(x.position - self_pos))
         target = living_beings[0]
-        if np.linalg.norm(target.position - self_pos) < 3:
+        if np.linalg.norm(target.position - self_pos) < player.get_attack_range():
             player.collect()
         else:
             player.move_to(target.position)

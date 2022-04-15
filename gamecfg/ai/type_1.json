@@ -1,7 +1,7 @@
 [
   {
     "eating": {
-      "hunger": [40, 60]
+      "hunger": [40, 60000]
     },
     "rest": {
       "energy": [20, 50]

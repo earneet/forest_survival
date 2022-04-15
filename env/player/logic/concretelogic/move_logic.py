@@ -65,8 +65,18 @@ class PlayerMoveLogic(PlayerConcreteLogic):
             self.update_move()
 
     def update_path(self):
-        cur_cell = self.path[0]
         position = self.player.position
+        if not self.path:   # at the end cell
+            tar_position = position + self.get_move_speed() * get_vec_by_direction(self.player.direction)
+            if np.linalg.norm(self.target_pos - position) < 5:
+                self.player.position = self.target_pos
+                self.parent_logic.switch_state(self.parent_logic.idle_logic)
+            else:
+                new_orientation = self._compute_towards(tar_position, self.target_pos)
+                self.player.direction = new_orientation
+                self.player.position = tar_position
+
+        cur_cell = self.path[0]
         orientation = self.player.direction
         tar_position = position + self.get_move_speed() * get_vec_by_direction(orientation)
         if not self._is_beyond_position(tar_position, self.map.get_cell_center(cur_cell), orientation):
@@ -83,8 +93,6 @@ class PlayerMoveLogic(PlayerConcreteLogic):
             new_orientation = self._compute_towards(corner, way_point)
             self.player.position = corner
             self.player.direction = new_orientation
-        else:
-            self.parent_logic.switch_state(self.parent_logic.idle_logic)
 
     @staticmethod
     def _is_beyond_position(position, target, orientation) -> bool:

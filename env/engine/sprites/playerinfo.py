@@ -17,6 +17,7 @@ class EPlayerInfo(pg.sprite.Sprite):
 
     def update(self):
         goal_msg = f"goal:  {self.game_obj.cur_goal}"
+        sub_goal_msg = f"sub_goal:  {self.game_obj.cur_sub_goal}"
         state_msg = f"state:  {self.game_obj.state.name}"
         sub_state_msg = f"sstate:  {self.game_obj.sub_state.name if self.game_obj.sub_state else ''}"
         hp_msg = f"hp:   {self.game_obj.hp} / {self.game_obj.hp_max}"
@@ -27,6 +28,7 @@ class EPlayerInfo(pg.sprite.Sprite):
         temperature = f"temperature:    {self.game_obj.get_fells_temperature()}"
 
         goal_img = self.font.render(goal_msg, True, self.color)
+        sub_goal_img = self.font.render(sub_goal_msg, True, self.color)
         state_img = self.font.render(state_msg, True, self.color)
         sub_state_img = self.font.render(sub_state_msg, True, self.color)
         hp_img = self.font.render(hp_msg, True, self.color)
@@ -40,6 +42,8 @@ class EPlayerInfo(pg.sprite.Sprite):
         total_height = 0
         self.image.blit(goal_img, (0, total_height))
         total_height += goal_img.get_height() + 1
+        self.image.blit(sub_goal_img, (0, total_height))
+        total_height += sub_goal_img.get_height() + 1
         self.image.blit(state_img, (0, total_height))
         total_height += state_img.get_height() + 1
         self.image.blit(sub_state_img, (0, total_height))

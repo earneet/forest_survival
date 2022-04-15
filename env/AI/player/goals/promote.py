@@ -11,9 +11,3 @@ class PromoteGoal(BaseGoal):
 
     def match(self, player, cfg) -> bool:
         return True
-
-    def update(self, player):
-        for sg in self.sub_goals:
-            if sg.update(player):
-                return True
-        return False

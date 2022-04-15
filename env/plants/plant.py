@@ -49,7 +49,7 @@ class Plant:
             collector.pickup(rewards)
             self.hp = 0
             self.collector = p
-            logging.warning(f" Plant was collected by {collector.get_name()}")
+            logging.info(f" Plant was collected by {collector.get_name()}")
             break
 
         if self.hp == 0:

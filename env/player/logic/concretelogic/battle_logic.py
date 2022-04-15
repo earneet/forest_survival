@@ -11,9 +11,11 @@ class PlayerBattleLogic(PlayerConcreteLogic):
     def on_enter_state(self, frames, target):
         self.player.attack_frame = frames
         self.player.interact_target = target
+        self.player.state = PlayerState.BATTLING
 
     def on_leave_state(self, *_):
         self.player.interact_target = None
+        self.player.state = PlayerState.IDLE
 
     def update(self):
         player = self.player
@@ -44,7 +46,7 @@ class PlayerBattleLogic(PlayerConcreteLogic):
     def process_event_attack(self, _):
         if self.player.state == PlayerState.BATTLING:
             return
-        target = self.player.find_interact_target("batting")
+        target = self.player.find_interact_target("battling")
         if target is None or target.is_dead():
             logging.warning("no interactive target found")
             return

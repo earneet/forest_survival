@@ -5,6 +5,7 @@ from queue import Queue
 import numpy as np
 
 from env.animals import new_animal
+from env.common.season import Season
 from env.common.terrain import string2terrains
 from env.player import make_player
 from env.map.map_config import map_cfg
@@ -64,7 +65,7 @@ class EnvLogic:
                 # logging.info(" a new month begin ... ")
                 season, season_change = month // 3, month % 3 == 0
                 if season_change:
-                    self.on_season_change(season)
+                    self.on_season_change(Season(season))
             self.on_new_day(day)
         elif day_residual == int(self.DAY_FRAMES * 0.25):
             self.on_sun_raise(day)
@@ -180,4 +181,5 @@ class EnvLogic:
         assert self is not None
         msg = f" a new season begin ... season {new_season}"
         logging.debug(msg)
+        self._env.season = new_season
         self._env.message.append(msg)

@@ -9,10 +9,6 @@ class RestGoal(BaseGoal):
 
     def matched(self, player, cfg) -> bool:
         energy = player.energy
+        if cfg.energy[0] > energy or energy > cfg.energy[1]:
+            return False
         return True
-
-    def update(self, player):
-        for sg in self.sub_goals:
-            if sg.update(player):
-                return True
-        return False

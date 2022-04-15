@@ -20,11 +20,12 @@ class Player:
     def __init__(self, env, disposition="type_1"):
         self.id = next(player_id)
         self.env = env
+        self.cfg = player_cfg
         self._logic = make_logic(self)
         self._ai_instance = make_ai_instance(self)
-        self.action = None
         self.events = []
         self.cur_goal = ""
+        self.cur_sub_goal = ""
         self.state = PlayerState.IDLE
         self.sub_state = None
         self.sub_state_stack = []  # used by mapcell logic, for resume pre sub_state when leave current cell
@@ -44,6 +45,7 @@ class Player:
         self.attack = player_cfg.attack
         self.attack_range = int(player_cfg.attack_range)
         self.attack_frame = 0  # attack settlement frame
+        self.last_ai_frame = 0
         self.make_frame = 0  # making settlement frame
         self.collect_frame = 0
         self.position = np.array([0, 0])  # use numpy array to make compute handy
@@ -71,7 +73,8 @@ class Player:
     def update(self):
         if self._logic:
             self._logic.update()
-        if self._ai_instance:
+        if self._ai_instance and self.frames - self.last_ai_frame >= 10:
+            self.last_ai_frame = self.frames
             self._ai_instance.update()
 
     def is_dead(self) -> bool:
@@ -166,10 +169,13 @@ class Player:
     def get_foods(self, handy=True) -> List[_Cosumeable_Items]:
         foods = []
         container = self.handy_items if handy else self.home_items
-        for idx, item, cnt in enumerate(container):
+        for idx, (item, cnt) in enumerate(container):
             if is_food(item):
                 foods.append((idx, item, cnt))
         return foods
+
+    def get_attack_range(self):
+        return self.cfg.attack_range
 
     def __getitem__(self, name):
         if hasattr(self, name):
